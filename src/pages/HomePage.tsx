@@ -490,16 +490,12 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
         "parentName", "parentPhone",
     ];
 
-    const isFormValid = () => requiredFields.every((k) => {
-        if (k === "personalStatement") return (data[k] || "").trim().split(/\s+/).length >= 30;
-        return (data[k] || "").trim() !== "";
-    });
+    const isFormValid = () => requiredFields.every((k) => (data[k] || "").trim() !== "");
 
     const validate = (): boolean => {
         const e: ErrorMap = {};
         requiredFields.forEach((k) => {
-            if (k === "personalStatement") { if (!data[k]?.trim() || data[k].trim().split(/\s+/).length < 30) e[k] = true; }
-            else { if (!(data[k] || "").trim()) e[k] = true; }
+            if (!(data[k] || "").trim()) e[k] = true;
         });
         setErrors(e); return Object.keys(e).length === 0;
     };
@@ -592,11 +588,10 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
 
             <SectionHeader icon="✍️" label="Personal Statement" />
             <Field label="Why do you want to attend Forbes International Academy?" required>
-                <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes International Academy. (Minimum 30 words)"
+                <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes International Academy."
                     value={data.personalStatement || ""}
                     onChange={(e) => { onChange("personalStatement", e.target.value); setErrors((p) => ({ ...p, personalStatement: false })); }}
                     className={`${inputBase} resize-y ${errors.personalStatement && touched ? "border-red-400 bg-red-50" : ""}`} />
-                {errors.personalStatement && touched && <p className="text-red-500 text-[11px] mt-1">Please provide at least 30 words.</p>}
             </Field>
 
             <SectionHeader icon="ℹ️" label="Additional Information" />
@@ -658,9 +653,9 @@ const RefBanner: React.FC<{ appRef: string }> = ({ appRef }) => (
 type AppScreen = "landing" | "form";
 
 const HomePage: React.FC = () => {
-    const [screen, setScreen]   = useState<AppScreen>("landing");
-    const [step, setStep]       = useState<number>(1);
-    const [appRef, setAppRef]   = useState<string>("");
+    const [screen, setScreen]     = useState<AppScreen>("landing");
+    const [step, setStep]         = useState<number>(1);
+    const [appRef, setAppRef]     = useState<string>("");
     const [recordId, setRecordId] = useState<number>(0);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
@@ -674,7 +669,8 @@ const HomePage: React.FC = () => {
 
     const handleNew = () => {
         const ref = generateRef();
-        setAppRef(ref); setRecordId(Date.now());
+        setAppRef(ref);
+        setRecordId(0);
         setStep1Data(EMPTY_STEP1); setStep2Data(EMPTY_STEP2); setStep3Data(EMPTY_STEP3);
         setReceiptFile(null); setStep(1); setScreen("form");
     };
@@ -689,11 +685,12 @@ const HomePage: React.FC = () => {
     };
 
     const handleStep1Complete = async () => {
-        await saveApplication({
-            id: recordId, appRef, status: "Pending",
+        const saved = await saveApplication({
+            id: 0, appRef, status: "Pending",
             submittedAt: new Date().toISOString(),
             student: step1Data,
         });
+        if (saved) setRecordId(saved.id);
         setStep(2);
     };
 

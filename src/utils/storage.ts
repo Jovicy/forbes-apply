@@ -64,23 +64,28 @@ export const getApplications = async (): Promise<ApplicationRecord[]> => {
 
 // ─── Write ────────────────────────────────────────────────────────────────────
 
-export const saveApplication = async (app: ApplicationRecord): Promise<void> => {
+export const saveApplication = async (app: ApplicationRecord): Promise<ApplicationRecord | null> => {
     try {
-        if (app.id) {
-            await fetch(`${API_BASE}/applications/${app.id}`, {
+        if (app.id && app.id > 0) {
+            const res = await fetch(`${API_BASE}/applications/${app.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(mapToDb(app)),
             });
+            const data = await res.json();
+            return mapFromDb(data);
         } else {
-            await fetch(`${API_BASE}/applications`, {
+            const res = await fetch(`${API_BASE}/applications`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(mapToDb(app)),
             });
+            const data = await res.json();
+            return mapFromDb(data);
         }
     } catch (e) {
         console.error("Failed to save application:", e);
+        return null;
     }
 };
 
