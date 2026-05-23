@@ -1,4 +1,7 @@
 // utils/storage.ts
+
+const API_BASE = "https://forbes-apply-api.johnvictordml.workers.dev";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ApplicationRecord {
@@ -20,6 +23,8 @@ export interface ApplicationRecord {
         transferName: string;
         bankName: string;
         transferDate: string;
+        receiptUrl?: string;
+        receiptName?: string;
     };
     application?: {
         streetAddress: string;
@@ -44,14 +49,14 @@ export interface ApplicationRecord {
     };
 }
 
-const STORAGE_KEY = "frc_applications";
+// ─── Read all ─────────────────────────────────────────────────────────────────
 
-// ─── Read ─────────────────────────────────────────────────────────────────────
-
-export const getApplications = (): ApplicationRecord[] => {
+export const getApplications = async (): Promise<ApplicationRecord[]> => {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? (JSON.parse(raw) as ApplicationRecord[]) : [];
+        const res = await fetch(`${API_BASE}/applications`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.map(mapFromDb);
     } catch {
         return [];
     }
@@ -59,17 +64,22 @@ export const getApplications = (): ApplicationRecord[] => {
 
 // ─── Write ────────────────────────────────────────────────────────────────────
 
-export const saveApplication = (app: ApplicationRecord): void => {
+export const saveApplication = async (app: ApplicationRecord): Promise<void> => {
     try {
-        const existing = getApplications();
-        // Update if same id already exists, otherwise append
-        const idx = existing.findIndex((a) => a.id === app.id);
-        if (idx >= 0) {
-            existing[idx] = app;
+        // If id exists, update — otherwise create new
+        if (app.id) {
+            await fetch(`${API_BASE}/applications/${app.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(mapToDb(app)),
+            });
         } else {
-            existing.push(app);
+            await fetch(`${API_BASE}/applications`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(mapToDb(app)),
+            });
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
     } catch (e) {
         console.error("Failed to save application:", e);
     }
@@ -77,20 +87,66 @@ export const saveApplication = (app: ApplicationRecord): void => {
 
 // ─── Update status ────────────────────────────────────────────────────────────
 
-export const updateApplicationStatus = (
+export const updateApplicationStatus = async (
     id: number,
     status: ApplicationRecord["status"]
-): void => {
-    const existing = getApplications();
-    const idx = existing.findIndex((a) => a.id === id);
-    if (idx >= 0) {
-        existing[idx].status = status;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+): Promise<void> => {
+    try {
+        await fetch(`${API_BASE}/applications/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+        });
+    } catch (e) {
+        console.error("Failed to update status:", e);
     }
+};
+
+// ─── Lookup by email ──────────────────────────────────────────────────────────
+
+export const findApplicationByEmail = async (email: string): Promise<ApplicationRecord | null> => {
+    try {
+        const res = await fetch(`${API_BASE}/applications/by-email?email=${encodeURIComponent(email)}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data ? mapFromDb(data) : null;
+    } catch {
+        return null;
+    }
+};
+
+// ─── Derive which step to resume from ────────────────────────────────────────
+
+export const getResumeStep = (app: ApplicationRecord): 2 | 3 | null => {
+    if (app.status === "Completed" || app.status === "Rejected") return null;
+    if (app.payment) return 3;
+    return 2;
 };
 
 // ─── Clear all (dev/testing only) ─────────────────────────────────────────────
 
 export const clearApplications = (): void => {
-    localStorage.removeItem(STORAGE_KEY);
+    // No longer needed with database
+    console.warn("clearApplications() is disabled when using the database.");
 };
+
+// ─── Helpers: map between DB shape and app shape ──────────────────────────────
+
+const mapToDb = (app: ApplicationRecord) => ({
+    appRef: app.appRef,
+    status: app.status,
+    submittedAt: app.submittedAt,
+    student: app.student,
+    payment: app.payment || null,
+    application: app.application || null,
+});
+
+const mapFromDb = (row: any): ApplicationRecord => ({
+    id: row.id,
+    appRef: row.app_ref,
+    status: row.status,
+    submittedAt: row.submitted_at,
+    student: row.student,
+    payment: row.payment,
+    application: row.application,
+});

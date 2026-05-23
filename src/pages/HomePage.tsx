@@ -12,12 +12,14 @@ interface Step1Data {
 }
 interface Step2Data {
     transferName: string; bankName: string; transferDate: string;
+    receiptFile?: File | null;
+    receiptName?: string;
 }
 interface Step3Data {
     streetAddress: string; city: string; state: string; country: string;
     emergencyName: string; emergencyRelationship: string; emergencyPhone: string;
     previousSchool: string; yearCompleted: string; grade: string;
-    subjects: string; extraCurricular: string; personalStatement: string;
+    personalStatement: string;
     parentName: string; parentPhone: string; parentEmail: string;
     parentOccupation: string; disability: string; hearAbout: string;
 }
@@ -32,28 +34,30 @@ const generateRef = (): string => {
     return ref;
 };
 
-const CLASSES = [
-    "JSS 1 (Junior Secondary 1)", "JSS 2 (Junior Secondary 2)", "JSS 3 (Junior Secondary 3)",
-    "SSS 1 (Senior Secondary 1)", "SSS 2 (Senior Secondary 2)", "SSS 3 (Senior Secondary 3)",
+const GRADES = [
+    "Grade 7", "Grade 8", "Grade 9", "Grade 10",
 ];
 
 const BANK = {
-    accountName: "Forbes Royal College",
-    bankName: "First Bank of Nigeria PLC",
-    accountNumber: "3012847593",
-    sortCode: "011",
+    accountName: "Forbes International Academy",
+    bankName:    "Polaris Bank",
+    accountNumber: "4091257630",
 };
 
 const EMPTY_STEP1: Step1Data = {
     firstName: "", lastName: "", email: "", phone: "",
     dob: "", gender: "", nationality: "", class: "",
 };
-const EMPTY_STEP2: Step2Data = { transferName: "", bankName: "", transferDate: "" };
+const EMPTY_STEP2: Step2Data = {
+    transferName: "", bankName: "", transferDate: "",
+    receiptFile: null, receiptName: "",
+};
 const EMPTY_STEP3: Step3Data = {
     streetAddress: "", city: "", state: "", country: "",
     emergencyName: "", emergencyRelationship: "", emergencyPhone: "",
-    previousSchool: "", yearCompleted: "", grade: "", subjects: "", extraCurricular: "",
-    personalStatement: "", parentName: "", parentPhone: "", parentEmail: "",
+    previousSchool: "", yearCompleted: "", grade: "",
+    personalStatement: "",
+    parentName: "", parentPhone: "", parentEmail: "",
     parentOccupation: "", disability: "", hearAbout: "",
 };
 
@@ -116,26 +120,21 @@ interface ResumeScreenProps {
 }
 
 const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
-    const [query, setQuery]   = useState("");
-    const [error, setError]   = useState("");
-    const [found, setFound]   = useState<ApplicationRecord | null>(null);
+    const [query, setQuery] = useState("");
+    const [error, setError] = useState("");
+    const [found, setFound] = useState<ApplicationRecord | null>(null);
 
     const handleSearch = () => {
-        const trimmed = query.trim().toUpperCase();
+        const trimmed = query.trim();
         if (!trimmed) { setError("Please enter your reference code or email."); return; }
         const all = getApplications();
         const match = all.find(
             (a) =>
-                a.appRef.toUpperCase() === trimmed ||
-                a.student.email.toLowerCase() === query.trim().toLowerCase()
+                a.appRef.toUpperCase() === trimmed.toUpperCase() ||
+                a.student.email.toLowerCase() === trimmed.toLowerCase()
         );
-        if (match) {
-            setFound(match);
-            setError("");
-        } else {
-            setFound(null);
-            setError("No application found. Check your reference or email and try again.");
-        }
+        if (match) { setFound(match); setError(""); }
+        else { setFound(null); setError("No application found. Check your reference or email and try again."); }
     };
 
     const stepLabel = (app: ApplicationRecord) => {
@@ -146,19 +145,16 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
 
     return (
         <div>
-            {/* Welcome banner */}
             <div className="bg-accent rounded-xl p-3.5 sm:p-4 mb-7 border-l-4 border-primary">
                 <p className="font-bold text-primary text-[14px] sm:text-[15px] mb-1">
-                    Welcome to Forbes Royal College Admissions
+                    Welcome to Forbes International Academy Admissions
                 </p>
                 <p className="text-slate-600 text-[12px] sm:text-[13px]">
                     2026/2027 Academic Session. Starting a new application or returning to complete one?
                 </p>
             </div>
 
-            {/* Two options */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {/* New application */}
                 <button onClick={onNew}
                     className="flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer text-left">
                     <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-[22px]">📝</div>
@@ -169,7 +165,6 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
                     <div className="mt-auto pt-2 text-primary font-bold text-[13px]">Start Now →</div>
                 </button>
 
-                {/* Resume application */}
                 <div className="flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-left">
                     <div className="w-11 h-11 bg-slate-200 rounded-xl flex items-center justify-center text-[22px]">🔄</div>
                     <div>
@@ -177,32 +172,25 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
                         <div className="text-slate-500 text-[12px] mt-1">Already started? Enter your reference code or email to continue.</div>
                     </div>
                     <div className="w-full mt-1 flex gap-2">
-                        <input
-                            type="text"
-                            value={query}
+                        <input type="text" value={query}
                             onChange={(e) => { setQuery(e.target.value); setError(""); setFound(null); }}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                             placeholder="e.g. FRC-AB3X9Z or email"
                             className={`flex-1 min-w-0 px-3 py-2 rounded-lg border-[1.5px] text-sm outline-none transition-colors
-                                ${error ? "border-red-400 bg-red-50" : "border-slate-300 focus:border-primary bg-white"}`}
-                        />
+                                ${error ? "border-red-400 bg-red-50" : "border-slate-300 focus:border-primary bg-white"}`} />
                         <button onClick={handleSearch}
                             className="px-3 py-2 bg-slate-700 text-white rounded-lg text-[12px] font-bold cursor-pointer hover:bg-slate-800 transition-all border-none shrink-0">
                             Find
                         </button>
                     </div>
                     {error && <p className="text-red-500 text-[11.5px] -mt-1">⚠ {error}</p>}
-
-                    {/* Found result */}
                     {found && (() => {
                         const { label, step, done } = stepLabel(found);
                         return (
                             <div className="w-full bg-white border border-emerald-200 rounded-xl p-3.5">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-emerald-600 text-[15px]">✅</span>
-                                    <span className="font-bold text-slate-800 text-[13px]">
-                                        {found.student.firstName} {found.student.lastName}
-                                    </span>
+                                    <span className="font-bold text-slate-800 text-[13px]">{found.student.firstName} {found.student.lastName}</span>
                                 </div>
                                 <div className="text-[12px] text-slate-500 font-mono mb-1">{found.appRef}</div>
                                 <div className="text-[12px] text-slate-600 mb-3">{label}</div>
@@ -287,10 +275,10 @@ const Step1: React.FC<Step1Props> = ({ data, onChange, onNext }) => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Field label="Nationality"><input type="text" placeholder="e.g. Nigerian" {...f("nationality")} /></Field>
-                    <Field label="Class Applying For" required>
+                    <Field label="Grade Applying For" required>
                         <select {...f("class")} className={`${inputBase} cursor-pointer ${errors.class && touched ? "border-red-400 bg-red-50" : ""} ${!data.class ? "text-slate-400" : "text-slate-800"}`}>
-                            <option value="" disabled>Select class</option>
-                            {CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                            <option value="" disabled>Select grade</option>
+                            {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </Field>
                 </div>
@@ -308,32 +296,54 @@ const Step1: React.FC<Step1Props> = ({ data, onChange, onNext }) => {
 
 interface Step2Props {
     data: Step2Data; appRef: string; firstName: string;
+    onReceiptChange: (file: File | null) => void;
     onChange: (field: keyof Step2Data, val: string) => void;
     onNext: () => void; onBack: () => void;
 }
-const Step2: React.FC<Step2Props> = ({ data, appRef, firstName, onChange, onNext, onBack }) => {
-    const [errors, setErrors]     = useState<ErrorMap>({});
+const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChange, onNext, onBack }) => {
+    const [errors, setErrors]       = useState<ErrorMap>({});
     const [confirmed, setConfirmed] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [touched, setTouched]   = useState(false);
+    const [touched, setTouched]     = useState(false);
+    const [dragOver, setDragOver]   = useState(false);
 
     const isFormValid = () =>
-        data.transferName.trim() !== "" && data.bankName.trim() !== "" &&
-        data.transferDate !== "" && confirmed;
+        data.transferName.trim() !== "" &&
+        data.bankName.trim() !== "" &&
+        data.transferDate !== "" &&
+        !!data.receiptFile &&
+        confirmed;
 
     const validate = (): boolean => {
         const e: ErrorMap = {};
         if (!data.transferName?.trim()) e.transferName = true;
         if (!data.bankName?.trim())     e.bankName     = true;
         if (!data.transferDate)         e.transferDate = true;
+        if (!data.receiptFile)          e.receiptFile  = true;
         if (!confirmed)                 e.confirmed    = true;
         setErrors(e); return Object.keys(e).length === 0;
     };
 
     const handleSubmit = () => { setTouched(true); if (validate()) setSubmitted(true); };
 
+    const handleFile = (file: File | null) => {
+        if (!file) return;
+        const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+        if (!allowed.includes(file.type)) {
+            setErrors((p) => ({ ...p, receiptFile: true }));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors((p) => ({ ...p, receiptFile: true }));
+            return;
+        }
+        onReceiptChange(file);
+        onChange("receiptName", file.name);
+        setErrors((p) => ({ ...p, receiptFile: false }));
+    };
+
     const f = (field: keyof Step2Data) => ({
-        value: data[field] || "",
+        value: (data[field] as string) || "",
         onChange: (e: React.ChangeEvent<HTMLInputElement>) => { onChange(field, e.target.value); setErrors((p) => ({ ...p, [field]: false })); },
         className: `${inputBase} ${errors[field] && touched ? "border-red-400 bg-red-50" : ""}`,
     });
@@ -341,23 +351,26 @@ const Step2: React.FC<Step2Props> = ({ data, appRef, firstName, onChange, onNext
     return (
         <div>
             <h2 className="text-[18px] sm:text-[20px] font-extrabold text-primary mb-1">Application Fee Payment</h2>
-            <p className="text-[12px] sm:text-[13px] text-slate-500 mb-5">Transfer the application fee via bank transfer, then complete the confirmation form below.</p>
+            <p className="text-[12px] sm:text-[13px] text-slate-500 mb-5">
+                Transfer the application fee via bank transfer, then upload your receipt and complete the confirmation form.
+            </p>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-3.5 mb-6 flex gap-2.5">
                 <span className="text-[16px] sm:text-[18px] shrink-0">⚠️</span>
                 <p className="text-[12px] sm:text-[13px] text-amber-800">
-                    This is a <strong>non-refundable fee of ₦15,000.00</strong>. You <strong>must</strong> include your reference{" "}
-                    <span className="bg-amber-200 text-amber-900 font-mono font-bold px-1.5 py-0.5 rounded text-[11px]">{appRef}</span> in your transfer.
+                    This is a <strong>non-refundable application processing fee of ₦15,000.00</strong>.
+                    Please upload your payment receipt after transferring.
                 </p>
             </div>
 
+            {/* Bank details */}
             <SectionHeader icon="🏦" label="Bank Transfer Details" />
             <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
                 <div className="bg-primary px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-lg flex items-center justify-center text-[14px] sm:text-[16px] shrink-0">🏛️</div>
                         <div>
-                            <div className="text-white font-bold text-[13px] sm:text-[14px]">Forbes Royal College</div>
+                            <div className="text-white font-bold text-[13px] sm:text-[14px]">Forbes International Academy</div>
                             <div className="text-white/60 text-[10px] sm:text-[11px]">Admissions Account</div>
                         </div>
                     </div>
@@ -367,23 +380,24 @@ const Step2: React.FC<Step2Props> = ({ data, appRef, firstName, onChange, onNext
                     </div>
                 </div>
                 <div className="px-4 sm:px-5 py-1">
-                    <BankRow label="Account Name"      value={BANK.accountName} />
-                    <BankRow label="Bank Name"         value={BANK.bankName} />
-                    <BankRow label="Account Number"    value={BANK.accountNumber} />
-                    <BankRow label="Bank Code"         value={BANK.sortCode} />
-                    <BankRow label="Payment Reference" value={appRef} />
+                    <BankRow label="Account Name"   value={BANK.accountName} />
+                    <BankRow label="Bank Name"      value={BANK.bankName} />
+                    <BankRow label="Account Number" value={BANK.accountNumber} />
                 </div>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-3.5 mb-6 text-[11.5px] sm:text-[12.5px] text-slate-600">
-                <strong>Important:</strong> Transfers may take 1–3 business days. Your reference <strong className="font-mono">{appRef}</strong> is your unique ID.
+                <strong>Important:</strong> After making the transfer, upload your payment receipt below and fill in the confirmation form. Our team will verify within 1–3 business days.
             </div>
 
             {submitted ? (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 sm:p-8 text-center">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-[22px] sm:text-[26px] mx-auto mb-4">✓</div>
                     <h3 className="text-[16px] sm:text-[18px] font-extrabold text-emerald-700 mb-2">Transfer Confirmed!</h3>
-                    <p className="text-[12px] sm:text-[13px] text-slate-600 mb-6">Thank you, <strong>{firstName}</strong>. We've recorded your confirmation. You may now proceed to the full application.</p>
+                    <p className="text-[12px] sm:text-[13px] text-slate-600 mb-6">
+                        Thank you, <strong>{firstName}</strong>. We've recorded your payment confirmation and receipt.
+                        You may now proceed to the full application.
+                    </p>
                     <button onClick={onNext} className="font-bold rounded-lg py-2.5 px-6 sm:px-7 text-sm bg-primary text-white border-none cursor-pointer hover:opacity-90 transition-all">
                         Proceed to Full Application Form →
                     </button>
@@ -397,19 +411,67 @@ const Step2: React.FC<Step2Props> = ({ data, appRef, firstName, onChange, onNext
                                 <input type="text" placeholder="e.g. Amara Osei" {...f("transferName")} />
                             </Field>
                             <Field label="Your Bank Name" required>
-                                <input type="text" placeholder="e.g. Access Bank, GTBank" {...f("bankName")} />
+                                <input type="text" placeholder="e.g. Access Bank, GTBank, Zenith" {...f("bankName")} />
                             </Field>
                         </div>
-                        <Field label="Date of Transfer" required><input type="date" {...f("transferDate")} /></Field>
-                        <div className={`flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border transition-colors ${errors.confirmed && touched ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}>
+                        <Field label="Date of Transfer" required>
+                            <input type="date" {...f("transferDate")} />
+                        </Field>
+
+                        {/* ── Receipt Upload ── */}
+                        <Field label="Upload Payment Receipt" required>
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                                onDragLeave={() => setDragOver(false)}
+                                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0] ?? null); }}
+                                className={`relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed transition-colors cursor-pointer
+                                    ${dragOver ? "border-primary bg-primary/5" :
+                                      errors.receiptFile && touched ? "border-red-400 bg-red-50" :
+                                      data.receiptFile ? "border-emerald-400 bg-emerald-50" :
+                                      "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"}`}
+                                onClick={() => document.getElementById("receipt-input")?.click()}
+                            >
+                                <input
+                                    id="receipt-input"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                                    className="hidden"
+                                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                                />
+                                {data.receiptFile ? (
+                                    <>
+                                        <div className="text-[28px]">✅</div>
+                                        <div className="text-[13px] font-semibold text-emerald-700 text-center">{data.receiptName}</div>
+                                        <div className="text-[11px] text-slate-500">Click or drop to replace</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="text-[30px]">📎</div>
+                                        <div className="text-[13px] font-semibold text-slate-700 text-center">
+                                            Click to upload or drag & drop
+                                        </div>
+                                        <div className="text-[11px] text-slate-400">JPG, PNG, WebP or PDF · Max 5 MB</div>
+                                    </>
+                                )}
+                            </div>
+                            {errors.receiptFile && touched && (
+                                <p className="text-red-500 text-[11px] mt-1">Please upload your payment receipt (JPG, PNG, or PDF, max 5 MB).</p>
+                            )}
+                        </Field>
+
+                        {/* Confirmation checkbox */}
+                        <div className={`flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border transition-colors
+                            ${errors.confirmed && touched ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}>
                             <input type="checkbox" id="confirm-chk" checked={confirmed}
                                 onChange={(e) => { setConfirmed(e.target.checked); setErrors((p) => ({ ...p, confirmed: false })); }}
                                 className="mt-0.5 w-4 h-4 cursor-pointer accent-primary shrink-0" />
                             <label htmlFor="confirm-chk" className="text-[11.5px] sm:text-[12.5px] text-slate-700 cursor-pointer leading-relaxed">
-                                <strong>I confirm</strong> I have transferred <strong>₦15,000.00</strong> to Forbes Royal College ({BANK.bankName} — Acc: {BANK.accountNumber}) with reference <strong className="font-mono">{appRef}</strong>.
+                                <strong>I confirm</strong> I have transferred <strong>₦15,000.00</strong> to Forbes International Academy
+                                ({BANK.bankName} — Acc: {BANK.accountNumber}) and the receipt above is authentic.
                             </label>
                         </div>
                     </div>
+
                     <div className="mt-6 sm:mt-8 flex items-center justify-between gap-3">
                         <button onClick={onBack} className={backBtn}>← Back</button>
                         <button onClick={handleSubmit} disabled={!isFormValid()} className={primaryBtn(!isFormValid())}>
@@ -430,9 +492,9 @@ interface Step3Props {
     onBack: () => void; onSubmit: () => void;
 }
 const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack, onSubmit }) => {
-    const [errors, setErrors]     = useState<ErrorMap>({});
+    const [errors, setErrors]       = useState<ErrorMap>({});
     const [submitted, setSubmitted] = useState(false);
-    const [touched, setTouched]   = useState(false);
+    const [touched, setTouched]     = useState(false);
 
     const requiredFields: (keyof Step3Data)[] = [
         "streetAddress", "city", "country",
@@ -488,6 +550,7 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 </p>
             </div>
 
+            {/* Contact & Address */}
             <SectionHeader icon="🏠" label="Contact & Address" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <Field label="Street Address" required><input type="text" placeholder="House number and street name" {...f("streetAddress")} /></Field>
@@ -498,6 +561,7 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 <Field label="Country of Residence" required><input type="text" placeholder="e.g. Nigeria" {...f("country")} /></Field>
             </div>
 
+            {/* Parent / Guardian */}
             <SectionHeader icon="👨‍👩‍👦" label="Parent / Guardian Information" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -510,6 +574,7 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 </div>
             </div>
 
+            {/* Emergency Contact */}
             <SectionHeader icon="🚨" label="Emergency Contact" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -517,9 +582,12 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                     <Field label="Relationship" required>
                         <select {...f("emergencyRelationship")} className={`${inputBase} cursor-pointer ${errors.emergencyRelationship && touched ? "border-red-400 bg-red-50" : ""} ${!data.emergencyRelationship ? "text-slate-400" : "text-slate-800"}`}>
                             <option value="" disabled>Select relationship</option>
-                            <option value="father">Father</option><option value="mother">Mother</option>
-                            <option value="guardian">Guardian</option><option value="uncle">Uncle</option>
-                            <option value="aunt">Aunt</option><option value="sibling">Sibling</option>
+                            <option value="father">Father</option>
+                            <option value="mother">Mother</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="uncle">Uncle</option>
+                            <option value="aunt">Aunt</option>
+                            <option value="sibling">Sibling</option>
                             <option value="other">Other</option>
                         </select>
                     </Field>
@@ -527,50 +595,57 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 <Field label="Phone Number" required><input type="tel" placeholder="+234 8100 000000" {...f("emergencyPhone")} /></Field>
             </div>
 
+            {/* Academic Background — subjects & extra-curricular removed */}
             <SectionHeader icon="🎓" label="Previous Academic Background" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Field label="Most Recent School Attended" required><input type="text" placeholder="School name" {...f("previousSchool")} /></Field>
                     <Field label="Year Completed / Left" required><input type="text" placeholder="e.g. 2025" {...f("yearCompleted")} /></Field>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Last Class Completed"><input type="text" placeholder="e.g. Primary 6, JSS 2" {...f("grade")} /></Field>
-                    <Field label="Key Subjects Studied"><input type="text" placeholder="e.g. Maths, English, Basic Science" {...f("subjects")} /></Field>
-                </div>
-                <Field label="Extra-Curricular Activities"><input type="text" placeholder="e.g. Football, Drama Club, Debate" {...f("extraCurricular")} /></Field>
+                <Field label="Last Class / Grade Completed">
+                    <input type="text" placeholder="e.g. Grade 6, Primary 6" {...f("grade")} />
+                </Field>
             </div>
 
+            {/* Personal Statement */}
             <SectionHeader icon="✍️" label="Personal Statement" />
-            <Field label="Why do you want to attend Forbes Royal College?" required>
-                <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes Royal College. (Minimum 30 words)"
+            <Field label="Why do you want to attend Forbes International Academy?" required>
+                <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes International Academy. (Minimum 30 words)"
                     value={data.personalStatement || ""}
                     onChange={(e) => { onChange("personalStatement", e.target.value); setErrors((p) => ({ ...p, personalStatement: false })); }}
                     className={`${inputBase} resize-y ${errors.personalStatement && touched ? "border-red-400 bg-red-50" : ""}`} />
                 {errors.personalStatement && touched && <p className="text-red-500 text-[11px] mt-1">Please provide at least 30 words.</p>}
             </Field>
 
+            {/* Additional Information */}
             <SectionHeader icon="ℹ️" label="Additional Information" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
                 <Field label="Disability / Accessibility Needs">
                     <select {...f("disability")} className={`${inputBase} cursor-pointer ${!data.disability ? "text-slate-400" : "text-slate-800"}`}>
                         <option value="" disabled>Select an option</option>
-                        <option value="none">None</option><option value="mobility">Mobility impairment</option>
-                        <option value="visual">Visual impairment</option><option value="hearing">Hearing impairment</option>
-                        <option value="learning">Learning difficulty</option><option value="other">Other</option>
+                        <option value="none">None</option>
+                        <option value="mobility">Mobility impairment</option>
+                        <option value="visual">Visual impairment</option>
+                        <option value="hearing">Hearing impairment</option>
+                        <option value="learning">Learning difficulty</option>
+                        <option value="other">Other</option>
                     </select>
                 </Field>
                 <Field label="How did you hear about us?">
                     <select {...f("hearAbout")} className={`${inputBase} cursor-pointer ${!data.hearAbout ? "text-slate-400" : "text-slate-800"}`}>
                         <option value="" disabled>Select an option</option>
-                        <option value="search">Search engine</option><option value="social">Social media</option>
-                        <option value="friend">Friend / family</option><option value="school">School / teacher</option>
-                        <option value="event">Event / fair</option><option value="other">Other</option>
+                        <option value="search">Search engine</option>
+                        <option value="social">Social media</option>
+                        <option value="friend">Friend / family</option>
+                        <option value="school">School / teacher</option>
+                        <option value="event">Event / fair</option>
+                        <option value="other">Other</option>
                     </select>
                 </Field>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 mb-6 text-[11.5px] sm:text-[12.5px] text-slate-600 leading-relaxed">
-                <strong>Declaration:</strong> By submitting this form, I confirm all information is accurate and complete. Any false information may result in rejection of my application.
+                <strong>Declaration:</strong> By submitting this form, I confirm all information provided is accurate and complete. Any false information may result in rejection of my application.
             </div>
 
             <div className="flex items-center justify-between gap-3">
@@ -583,7 +658,7 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
     );
 };
 
-// ─── REFERENCE BANNER (shown while on steps 2 & 3) ───────────────────────────
+// ─── Ref Banner ───────────────────────────────────────────────────────────────
 
 const RefBanner: React.FC<{ appRef: string }> = ({ appRef }) => (
     <div className="flex items-center justify-between gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 mb-5">
@@ -591,7 +666,7 @@ const RefBanner: React.FC<{ appRef: string }> = ({ appRef }) => (
             Your application reference: <strong className="font-mono text-primary">{appRef}</strong>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] text-slate-400">Save this to resume later</span>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">Save this to resume later</span>
             <CopyBtn value={appRef} />
         </div>
     </div>
@@ -602,10 +677,11 @@ const RefBanner: React.FC<{ appRef: string }> = ({ appRef }) => (
 type AppScreen = "landing" | "form";
 
 const HomePage: React.FC = () => {
-    const [screen, setScreen] = useState<AppScreen>("landing");
-    const [step, setStep]     = useState<number>(1);
-    const [appRef, setAppRef] = useState<string>("");
+    const [screen, setScreen]   = useState<AppScreen>("landing");
+    const [step, setStep]       = useState<number>(1);
+    const [appRef, setAppRef]   = useState<string>("");
     const [recordId, setRecordId] = useState<number>(0);
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
     const [step1Data, setStep1Data] = useState<Step1Data>(EMPTY_STEP1);
     const [step2Data, setStep2Data] = useState<Step2Data>(EMPTY_STEP2);
@@ -615,41 +691,45 @@ const HomePage: React.FC = () => {
     const update2 = (field: keyof Step2Data, val: string) => setStep2Data((p) => ({ ...p, [field]: val }));
     const update3 = (field: keyof Step3Data, val: string) => setStep3Data((p) => ({ ...p, [field]: val }));
 
-    // ── Start a brand-new application ────────────────────────────────────────
     const handleNew = () => {
         const ref = generateRef();
-        const id  = Date.now();
-        setAppRef(ref);
-        setRecordId(id);
-        setStep1Data(EMPTY_STEP1);
-        setStep2Data(EMPTY_STEP2);
-        setStep3Data(EMPTY_STEP3);
-        setStep(1);
-        setScreen("form");
+        setAppRef(ref); setRecordId(Date.now());
+        setStep1Data(EMPTY_STEP1); setStep2Data(EMPTY_STEP2); setStep3Data(EMPTY_STEP3);
+        setReceiptFile(null); setStep(1); setScreen("form");
     };
 
-    // ── Resume an existing application ───────────────────────────────────────
     const handleResume = (app: ApplicationRecord) => {
-        setAppRef(app.appRef);
-        setRecordId(app.id);
+        setAppRef(app.appRef); setRecordId(app.id);
         setStep1Data(app.student as Step1Data);
         if (app.payment) setStep2Data(app.payment as Step2Data);
         if (app.application) setStep3Data(app.application as Step3Data);
-        // Drop them at the right step
-        const nextStep = app.payment ? 3 : 2;
-        setStep(nextStep);
+        setStep(app.payment ? 3 : 2);
         setScreen("form");
     };
 
-    // ── Step save handlers ────────────────────────────────────────────────────
     const handleStep1Complete = () => {
         saveApplication({ id: recordId, appRef, status: "Pending", submittedAt: new Date().toISOString(), student: step1Data });
         setStep(2);
     };
 
     const handleStep2Complete = () => {
-        saveApplication({ id: recordId, appRef, status: "Payment Verified", submittedAt: new Date().toISOString(), student: step1Data, payment: step2Data });
-        setStep(3);
+        const save = (receiptUrl?: string) => {
+            saveApplication({
+                id: recordId, appRef, status: "Payment Verified",
+                submittedAt: new Date().toISOString(),
+                student: step1Data,
+                payment: { ...step2Data, receiptUrl, receiptName: step2Data.receiptName },
+            });
+            setStep(3);
+        };
+
+        if (receiptFile) {
+            const reader = new FileReader();
+            reader.onload = (e) => save(e.target?.result as string);
+            reader.readAsDataURL(receiptFile);
+        } else {
+            save();
+        }
     };
 
     const handleFinalSubmit = () => {
@@ -661,22 +741,21 @@ const HomePage: React.FC = () => {
             <Navbar variant="application" currentStep={screen === "form" ? step : 1} />
             <div className="mx-auto py-6 sm:py-8 px-3 sm:px-4 pb-12 max-w-3xl">
                 <div className="bg-white rounded-2xl px-4 sm:px-8 md:px-10 py-6 sm:py-9 shadow-[0_2px_20px_rgba(11,53,123,0.08)] border border-slate-200">
-
-                    {screen === "landing" && (
-                        <ResumeScreen onNew={handleNew} onResume={handleResume} />
-                    )}
-
+                    {screen === "landing" && <ResumeScreen onNew={handleNew} onResume={handleResume} />}
                     {screen === "form" && (
                         <>
-                            {/* Show reference banner on steps 2 & 3 so user can save it */}
                             {step > 1 && <RefBanner appRef={appRef} />}
-
-                            {step === 1 && (
-                                <Step1 data={step1Data} onChange={update1} onNext={handleStep1Complete} />
-                            )}
+                            {step === 1 && <Step1 data={step1Data} onChange={update1} onNext={handleStep1Complete} />}
                             {step === 2 && (
-                                <Step2 data={step2Data} appRef={appRef} firstName={step1Data.firstName}
-                                    onChange={update2} onNext={handleStep2Complete} onBack={() => setStep(1)} />
+                                <Step2
+                                    data={step2Data} appRef={appRef} firstName={step1Data.firstName}
+                                    onChange={update2}
+                                    onReceiptChange={(file) => {
+                                        setReceiptFile(file);
+                                        setStep2Data((p) => ({ ...p, receiptFile: file, receiptName: file?.name ?? "" }));
+                                    }}
+                                    onNext={handleStep2Complete} onBack={() => setStep(1)}
+                                />
                             )}
                             {step === 3 && (
                                 <Step3 data={step3Data} firstName={step1Data.firstName} appRef={appRef}

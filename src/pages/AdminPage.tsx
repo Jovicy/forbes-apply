@@ -149,9 +149,23 @@ const DetailModal: React.FC<{
                     {/* Payment info */}
                     {app.payment && (
                         <Section title="💳 Payment Confirmation">
-                            <Row label="Sender Name"  value={app.payment.transferName} />
-                            <Row label="Sender Bank"  value={app.payment.bankName} />
+                            <Row label="Sender Name"   value={app.payment.transferName} />
+                            <Row label="Sender Bank"   value={app.payment.bankName} />
                             <Row label="Transfer Date" value={app.payment.transferDate} />
+                            {app.payment.receiptUrl && (
+                                <div className="flex gap-3 px-3.5 py-2.5">
+                                    <span className="text-[12px] text-slate-400 w-32 shrink-0">Receipt</span>
+                                    <a
+                                        href={app.payment.receiptUrl}
+                                        download={app.payment.receiptName || "receipt"}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1.5 bg-primary text-white text-[12px] font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition-all"
+                                    >
+                                        ⬇ Download Receipt
+                                    </a>
+                                </div>
+                            )}
                         </Section>
                     )}
 
