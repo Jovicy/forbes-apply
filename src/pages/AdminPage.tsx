@@ -6,8 +6,6 @@ import type { ApplicationRecord } from "../utils/storage";
 
 type TabKey = "initial" | "payments" | "full";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 const formatNaira = (amount: number): string =>
     "₦" + amount.toLocaleString("en-NG");
 
@@ -19,8 +17,6 @@ const formatDate = (iso: string): string =>
     new Date(iso).toLocaleDateString("en-GB", {
         day: "numeric", month: "short", year: "numeric",
     });
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
 
 const StatusBadge: React.FC<{ status: ApplicationRecord["status"] }> = ({ status }) => {
     const styles: Record<ApplicationRecord["status"], string> = {
@@ -36,8 +32,6 @@ const StatusBadge: React.FC<{ status: ApplicationRecord["status"] }> = ({ status
     );
 };
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
 interface StatCardProps {
     icon: string; value: string; label: string; valueClass?: string;
 }
@@ -52,8 +46,6 @@ const StatCard: React.FC<StatCardProps> = ({ icon, value, label, valueClass = "t
         </div>
     </div>
 );
-
-// ─── Tab Button ───────────────────────────────────────────────────────────────
 
 interface TabBtnProps {
     active: boolean; onClick: () => void;
@@ -72,16 +64,12 @@ const TabBtn: React.FC<TabBtnProps> = ({ active, onClick, icon, label, count }) 
     </button>
 );
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
 const EmptyState: React.FC<{ message?: string }> = ({ message = "No submissions yet" }) => (
     <div className="py-10 sm:py-12 px-6 text-center text-slate-400">
         <div className="text-[36px] sm:text-[40px] mb-3">📭</div>
         <div className="font-semibold text-[13px] sm:text-[14px]">{message}</div>
     </div>
 );
-
-// ─── Table header cell ────────────────────────────────────────────────────────
 
 const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <th className="text-left px-4 py-3 text-[11px] sm:text-[12px] font-extrabold text-slate-500 uppercase tracking-[0.8px] whitespace-nowrap">
@@ -94,8 +82,6 @@ const Td: React.FC<{ children: React.ReactNode; mono?: boolean }> = ({ children,
     </td>
 );
 
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
-
 const DetailModal: React.FC<{
     app: ApplicationRecord;
     onClose: () => void;
@@ -106,7 +92,6 @@ const DetailModal: React.FC<{
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center px-3 sm:px-4 py-6 overflow-y-auto">
             <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl">
-                {/* Header */}
                 <div className="bg-primary px-5 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
                     <div>
                         <div className="text-white font-extrabold text-[16px]">
@@ -120,7 +105,6 @@ const DetailModal: React.FC<{
                 </div>
 
                 <div className="p-5 sm:p-6 flex flex-col gap-5">
-                    {/* Status changer */}
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className="text-[12px] font-bold text-slate-600">Update Status:</span>
                         {statuses.map((s) => (
@@ -134,7 +118,6 @@ const DetailModal: React.FC<{
                         ))}
                     </div>
 
-                    {/* Student info */}
                     <Section title="👤 Student Information">
                         <Row label="Full Name"  value={`${app.student.firstName} ${app.student.lastName}`} />
                         <Row label="Email"       value={app.student.email} />
@@ -146,7 +129,6 @@ const DetailModal: React.FC<{
                         <Row label="Applied On"  value={formatDate(app.submittedAt)} />
                     </Section>
 
-                    {/* Payment info */}
                     {app.payment && (
                         <Section title="💳 Payment Confirmation">
                             <Row label="Sender Name"   value={app.payment.transferName} />
@@ -169,7 +151,6 @@ const DetailModal: React.FC<{
                         </Section>
                     )}
 
-                    {/* Full application */}
                     {app.application && (
                         <>
                             <Section title="🏠 Address">
@@ -217,27 +198,30 @@ const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     </div>
 );
 
-// ─── Admin Page ───────────────────────────────────────────────────────────────
-
 const AdminPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabKey>("initial");
     const [applications, setApplications] = useState<ApplicationRecord[]>([]);
     const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    // Reload from localStorage whenever tab changes or on mount
     useEffect(() => {
-        setApplications(getApplications());
+        const load = async () => {
+            setLoading(true);
+            const apps = await getApplications();
+            setApplications(apps);
+            setLoading(false);
+        };
+        load();
     }, [activeTab]);
 
-    const handleStatusChange = (id: number, status: ApplicationRecord["status"]) => {
-        updateApplicationStatus(id, status);
-        setApplications(getApplications());
-        // Update the modal view too
+    const handleStatusChange = async (id: number, status: ApplicationRecord["status"]) => {
+        await updateApplicationStatus(id, status);
+        const apps = await getApplications();
+        setApplications(apps);
         setSelectedApp((prev) => prev && prev.id === id ? { ...prev, status } : prev);
     };
 
-    // ── Filter logic per tab ──────────────────────────────────────────────────
-    const initialApps  = applications; // everyone who completed step 1
+    const initialApps  = applications;
     const paymentApps  = applications.filter((a) => a.payment);
     const fullApps     = applications.filter((a) => a.application);
 
@@ -270,24 +254,20 @@ const AdminPage: React.FC = () => {
     return (
         <>
             <Navbar variant="admin" />
-
             <div className="mx-auto py-6 sm:py-8 px-3 sm:px-4 pb-12 max-w-7xl">
                 <div className="bg-white rounded-2xl px-4 sm:px-8 md:px-10 py-6 sm:py-9 shadow-[0_2px_20px_rgba(11,53,123,0.08)] border border-slate-200">
 
-                    {/* Header */}
                     <div className="mb-5 sm:mb-6">
                         <h1 className="text-[18px] sm:text-[22px] font-extrabold text-primary">Admin Dashboard</h1>
                         <p className="text-[12px] sm:text-[13px] text-slate-500 mt-1">Live data — {today}</p>
                     </div>
 
-                    {/* Stat Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-7">
                         <StatCard icon="👥" value={String(stats.totalApplicants)}    label="Total Applicants" />
                         <StatCard icon="💰" value={formatNaira(stats.paymentsCollected)} label="Payments Collected" valueClass="text-emerald-600" />
                         <StatCard icon="📝" value={String(stats.fullFormsSubmitted)} label="Full Forms Submitted" valueClass="text-violet-700" />
                     </div>
 
-                    {/* Tabs */}
                     <div className="flex gap-1 mb-5 bg-slate-100 rounded-xl p-1 w-fit max-w-full overflow-x-auto">
                         {tabs.map((tab) => (
                             <TabBtn key={tab.key} active={activeTab === tab.key}
@@ -296,9 +276,10 @@ const AdminPage: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* Table */}
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                        {currentRows.length === 0 ? (
+                        {loading ? (
+                            <div className="py-10 text-center text-slate-400 text-[13px]">Loading...</div>
+                        ) : currentRows.length === 0 ? (
                             <EmptyState message={
                                 activeTab === "initial"  ? "No initial applications yet" :
                                 activeTab === "payments" ? "No payments recorded yet" :
@@ -347,12 +328,10 @@ const AdminPage: React.FC = () => {
                             </div>
                         )}
                     </div>
-
                 </div>
                 <Footer />
             </div>
 
-            {/* Detail Modal */}
             {selectedApp && (
                 <DetailModal
                     app={selectedApp}

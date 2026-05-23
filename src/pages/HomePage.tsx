@@ -19,6 +19,7 @@ interface Step3Data {
     streetAddress: string; city: string; state: string; country: string;
     emergencyName: string; emergencyRelationship: string; emergencyPhone: string;
     previousSchool: string; yearCompleted: string; grade: string;
+    subjects: string; extraCurricular: string;
     personalStatement: string;
     parentName: string; parentPhone: string; parentEmail: string;
     parentOccupation: string; disability: string; hearAbout: string;
@@ -34,9 +35,7 @@ const generateRef = (): string => {
     return ref;
 };
 
-const GRADES = [
-    "Grade 7", "Grade 8", "Grade 9", "Grade 10",
-];
+const GRADES = ["Grade 7", "Grade 8", "Grade 9", "Grade 10"];
 
 const BANK = {
     accountName: "Forbes International Academy",
@@ -56,6 +55,7 @@ const EMPTY_STEP3: Step3Data = {
     streetAddress: "", city: "", state: "", country: "",
     emergencyName: "", emergencyRelationship: "", emergencyPhone: "",
     previousSchool: "", yearCompleted: "", grade: "",
+    subjects: "", extraCurricular: "",
     personalStatement: "",
     parentName: "", parentPhone: "", parentEmail: "",
     parentOccupation: "", disability: "", hearAbout: "",
@@ -123,11 +123,14 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
     const [query, setQuery] = useState("");
     const [error, setError] = useState("");
     const [found, setFound] = useState<ApplicationRecord | null>(null);
+    const [searching, setSearching] = useState(false);
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         const trimmed = query.trim();
         if (!trimmed) { setError("Please enter your reference code or email."); return; }
-        const all = getApplications();
+        setSearching(true);
+        const all = await getApplications();
+        setSearching(false);
         const match = all.find(
             (a) =>
                 a.appRef.toUpperCase() === trimmed.toUpperCase() ||
@@ -178,9 +181,9 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
                             placeholder="e.g. FRC-AB3X9Z or email"
                             className={`flex-1 min-w-0 px-3 py-2 rounded-lg border-[1.5px] text-sm outline-none transition-colors
                                 ${error ? "border-red-400 bg-red-50" : "border-slate-300 focus:border-primary bg-white"}`} />
-                        <button onClick={handleSearch}
+                        <button onClick={handleSearch} disabled={searching}
                             className="px-3 py-2 bg-slate-700 text-white rounded-lg text-[12px] font-bold cursor-pointer hover:bg-slate-800 transition-all border-none shrink-0">
-                            Find
+                            {searching ? "..." : "Find"}
                         </button>
                     </div>
                     {error && <p className="text-red-500 text-[11.5px] -mt-1">⚠ {error}</p>}
@@ -329,14 +332,8 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
     const handleFile = (file: File | null) => {
         if (!file) return;
         const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-        if (!allowed.includes(file.type)) {
-            setErrors((p) => ({ ...p, receiptFile: true }));
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            setErrors((p) => ({ ...p, receiptFile: true }));
-            return;
-        }
+        if (!allowed.includes(file.type)) { setErrors((p) => ({ ...p, receiptFile: true })); return; }
+        if (file.size > 5 * 1024 * 1024) { setErrors((p) => ({ ...p, receiptFile: true })); return; }
         onReceiptChange(file);
         onChange("receiptName", file.name);
         setErrors((p) => ({ ...p, receiptFile: false }));
@@ -363,7 +360,6 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                 </p>
             </div>
 
-            {/* Bank details */}
             <SectionHeader icon="🏦" label="Bank Transfer Details" />
             <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
                 <div className="bg-primary px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
@@ -418,7 +414,6 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                             <input type="date" {...f("transferDate")} />
                         </Field>
 
-                        {/* ── Receipt Upload ── */}
                         <Field label="Upload Payment Receipt" required>
                             <div
                                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -431,13 +426,8 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                                       "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"}`}
                                 onClick={() => document.getElementById("receipt-input")?.click()}
                             >
-                                <input
-                                    id="receipt-input"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                                    className="hidden"
-                                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-                                />
+                                <input id="receipt-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
+                                    className="hidden" onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
                                 {data.receiptFile ? (
                                     <>
                                         <div className="text-[28px]">✅</div>
@@ -447,9 +437,7 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                                 ) : (
                                     <>
                                         <div className="text-[30px]">📎</div>
-                                        <div className="text-[13px] font-semibold text-slate-700 text-center">
-                                            Click to upload or drag & drop
-                                        </div>
+                                        <div className="text-[13px] font-semibold text-slate-700 text-center">Click to upload or drag & drop</div>
                                         <div className="text-[11px] text-slate-400">JPG, PNG, WebP or PDF · Max 5 MB</div>
                                     </>
                                 )}
@@ -459,7 +447,6 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                             )}
                         </Field>
 
-                        {/* Confirmation checkbox */}
                         <div className={`flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border transition-colors
                             ${errors.confirmed && touched ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}>
                             <input type="checkbox" id="confirm-chk" checked={confirmed}
@@ -550,7 +537,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 </p>
             </div>
 
-            {/* Contact & Address */}
             <SectionHeader icon="🏠" label="Contact & Address" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <Field label="Street Address" required><input type="text" placeholder="House number and street name" {...f("streetAddress")} /></Field>
@@ -561,7 +547,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 <Field label="Country of Residence" required><input type="text" placeholder="e.g. Nigeria" {...f("country")} /></Field>
             </div>
 
-            {/* Parent / Guardian */}
             <SectionHeader icon="👨‍👩‍👦" label="Parent / Guardian Information" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -574,7 +559,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 </div>
             </div>
 
-            {/* Emergency Contact */}
             <SectionHeader icon="🚨" label="Emergency Contact" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -595,7 +579,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 <Field label="Phone Number" required><input type="tel" placeholder="+234 8100 000000" {...f("emergencyPhone")} /></Field>
             </div>
 
-            {/* Academic Background — subjects & extra-curricular removed */}
             <SectionHeader icon="🎓" label="Previous Academic Background" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -607,7 +590,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 </Field>
             </div>
 
-            {/* Personal Statement */}
             <SectionHeader icon="✍️" label="Personal Statement" />
             <Field label="Why do you want to attend Forbes International Academy?" required>
                 <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes International Academy. (Minimum 30 words)"
@@ -617,7 +599,6 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                 {errors.personalStatement && touched && <p className="text-red-500 text-[11px] mt-1">Please provide at least 30 words.</p>}
             </Field>
 
-            {/* Additional Information */}
             <SectionHeader icon="ℹ️" label="Additional Information" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
                 <Field label="Disability / Accessibility Needs">
@@ -707,14 +688,18 @@ const HomePage: React.FC = () => {
         setScreen("form");
     };
 
-    const handleStep1Complete = () => {
-        saveApplication({ id: recordId, appRef, status: "Pending", submittedAt: new Date().toISOString(), student: step1Data });
+    const handleStep1Complete = async () => {
+        await saveApplication({
+            id: recordId, appRef, status: "Pending",
+            submittedAt: new Date().toISOString(),
+            student: step1Data,
+        });
         setStep(2);
     };
 
     const handleStep2Complete = () => {
-        const save = (receiptUrl?: string) => {
-            saveApplication({
+        const save = async (receiptUrl?: string) => {
+            await saveApplication({
                 id: recordId, appRef, status: "Payment Verified",
                 submittedAt: new Date().toISOString(),
                 student: step1Data,
@@ -732,8 +717,14 @@ const HomePage: React.FC = () => {
         }
     };
 
-    const handleFinalSubmit = () => {
-        saveApplication({ id: recordId, appRef, status: "Completed", submittedAt: new Date().toISOString(), student: step1Data, payment: step2Data, application: step3Data });
+    const handleFinalSubmit = async () => {
+        await saveApplication({
+            id: recordId, appRef, status: "Completed",
+            submittedAt: new Date().toISOString(),
+            student: step1Data,
+            payment: step2Data,
+            application: step3Data,
+        });
     };
 
     return (

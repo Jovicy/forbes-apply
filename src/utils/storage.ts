@@ -66,7 +66,6 @@ export const getApplications = async (): Promise<ApplicationRecord[]> => {
 
 export const saveApplication = async (app: ApplicationRecord): Promise<void> => {
     try {
-        // If id exists, update — otherwise create new
         if (app.id) {
             await fetch(`${API_BASE}/applications/${app.id}`, {
                 method: "PUT",
@@ -126,11 +125,10 @@ export const getResumeStep = (app: ApplicationRecord): 2 | 3 | null => {
 // ─── Clear all (dev/testing only) ─────────────────────────────────────────────
 
 export const clearApplications = (): void => {
-    // No longer needed with database
     console.warn("clearApplications() is disabled when using the database.");
 };
 
-// ─── Helpers: map between DB shape and app shape ──────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const mapToDb = (app: ApplicationRecord) => ({
     appRef: app.appRef,
