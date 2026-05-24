@@ -20,10 +20,10 @@ const formatDate = (iso: string): string =>
 
 const StatusBadge: React.FC<{ status: ApplicationRecord["status"] }> = ({ status }) => {
     const styles: Record<ApplicationRecord["status"], string> = {
-        "Pending":          "bg-amber-100 text-amber-700",
+        "Pending": "bg-amber-100 text-amber-700",
         "Payment Verified": "bg-blue-100 text-blue-700",
-        "Completed":        "bg-emerald-100 text-emerald-700",
-        "Rejected":         "bg-red-100 text-red-700",
+        "Completed": "bg-emerald-100 text-emerald-700",
+        "Rejected": "bg-red-100 text-red-700",
     };
     return (
         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${styles[status]}`}>
@@ -89,6 +89,16 @@ const DetailModal: React.FC<{
 }> = ({ app, onClose, onStatusChange }) => {
     const statuses: ApplicationRecord["status"][] = ["Pending", "Payment Verified", "Completed", "Rejected"];
 
+    const handleDownloadReceipt = () => {
+        if (!app.payment?.receiptUrl) return;
+        const link = document.createElement("a");
+        link.href = app.payment.receiptUrl;
+        link.download = app.payment.receiptName || "receipt";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center px-3 sm:px-4 py-6 overflow-y-auto">
             <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl">
@@ -119,33 +129,30 @@ const DetailModal: React.FC<{
                     </div>
 
                     <Section title="👤 Student Information">
-                        <Row label="Full Name"  value={`${app.student.firstName} ${app.student.lastName}`} />
-                        <Row label="Email"       value={app.student.email} />
-                        <Row label="Phone"       value={app.student.phone} />
-                        <Row label="DOB"         value={app.student.dob} />
-                        <Row label="Gender"      value={app.student.gender || "—"} />
+                        <Row label="Full Name" value={`${app.student.firstName} ${app.student.lastName}`} />
+                        <Row label="Email" value={app.student.email} />
+                        <Row label="Phone" value={app.student.phone} />
+                        <Row label="DOB" value={app.student.dob} />
+                        <Row label="Gender" value={app.student.gender || "—"} />
                         <Row label="Nationality" value={app.student.nationality || "—"} />
-                        <Row label="Class"       value={app.student.class} />
-                        <Row label="Applied On"  value={formatDate(app.submittedAt)} />
+                        <Row label="Class" value={app.student.class} />
+                        <Row label="Applied On" value={formatDate(app.submittedAt)} />
                     </Section>
 
                     {app.payment && (
                         <Section title="💳 Payment Confirmation">
-                            <Row label="Sender Name"   value={app.payment.transferName} />
-                            <Row label="Sender Bank"   value={app.payment.bankName} />
+                            <Row label="Sender Name" value={app.payment.transferName} />
+                            <Row label="Sender Bank" value={app.payment.bankName} />
                             <Row label="Transfer Date" value={app.payment.transferDate} />
                             {app.payment.receiptUrl && (
                                 <div className="flex gap-3 px-3.5 py-2.5">
                                     <span className="text-[12px] text-slate-400 w-32 shrink-0">Receipt</span>
-                                    <a
-                                        href={app.payment.receiptUrl}
-                                        download={app.payment.receiptName || "receipt"}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 bg-primary text-white text-[12px] font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition-all"
+                                    <button
+                                        onClick={handleDownloadReceipt}
+                                        className="inline-flex items-center gap-1.5 bg-primary text-white text-[12px] font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition-all border-none cursor-pointer"
                                     >
                                         ⬇ Download Receipt
-                                    </a>
+                                    </button>
                                 </div>
                             )}
                         </Section>
@@ -154,23 +161,26 @@ const DetailModal: React.FC<{
                     {app.application && (
                         <>
                             <Section title="🏠 Address">
-                                <Row label="Street"  value={app.application.streetAddress} />
-                                <Row label="City"    value={app.application.city} />
-                                <Row label="State"   value={app.application.state || "—"} />
+                                <Row label="Street" value={app.application.streetAddress} />
+                                <Row label="City" value={app.application.city} />
+                                <Row label="State" value={app.application.state || "—"} />
                                 <Row label="Country" value={app.application.country} />
                             </Section>
                             <Section title="👨‍👩‍👦 Parent / Guardian">
-                                <Row label="Name"       value={app.application.parentName} />
-                                <Row label="Phone"      value={app.application.parentPhone} />
-                                <Row label="Email"      value={app.application.parentEmail || "—"} />
+                                <Row label="Name" value={app.application.parentName} />
+                                <Row label="Phone" value={app.application.parentPhone} />
+                                <Row label="Email" value={app.application.parentEmail || "—"} />
                                 <Row label="Occupation" value={app.application.parentOccupation || "—"} />
+                            </Section>
+                            <Section title="🚨 Emergency Contact">
+                                <Row label="Name" value={app.application.emergencyName} />
+                                <Row label="Relationship" value={app.application.emergencyRelationship} />
+                                <Row label="Phone" value={app.application.emergencyPhone} />
                             </Section>
                             <Section title="🎓 Academic Background">
                                 <Row label="Previous School" value={app.application.previousSchool} />
-                                <Row label="Year Completed"  value={app.application.yearCompleted} />
-                                <Row label="Grade"           value={app.application.grade || "—"} />
-                                <Row label="Subjects"        value={app.application.subjects || "—"} />
-                                <Row label="Extra-Curricular" value={app.application.extraCurricular || "—"} />
+                                <Row label="Year Completed" value={app.application.yearCompleted} />
+                                <Row label="Grade" value={app.application.grade || "—"} />
                             </Section>
                             <Section title="✍️ Personal Statement">
                                 <p className="text-[13px] text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-3">
@@ -221,32 +231,32 @@ const AdminPage: React.FC = () => {
         setSelectedApp((prev) => prev && prev.id === id ? { ...prev, status } : prev);
     };
 
-    const initialApps  = applications;
-    const paymentApps  = applications.filter((a) => a.payment);
-    const fullApps     = applications.filter((a) => a.application);
+    const initialApps = applications;
+    const paymentApps = applications.filter((a) => a.payment);
+    const fullApps = applications.filter((a) => a.application);
 
     const tabData: Record<TabKey, ApplicationRecord[]> = {
-        initial:  initialApps,
+        initial: initialApps,
         payments: paymentApps,
-        full:     fullApps,
+        full: fullApps,
     };
 
     const counts = {
-        initial:  initialApps.length,
+        initial: initialApps.length,
         payments: paymentApps.length,
-        full:     fullApps.length,
+        full: fullApps.length,
     };
 
     const stats = {
-        totalApplicants:    applications.length,
-        paymentsCollected:  paymentApps.length * 15000,
+        totalApplicants: applications.length,
+        paymentsCollected: paymentApps.length * 15000,
         fullFormsSubmitted: fullApps.length,
     };
 
     const tabs: { key: TabKey; icon: string; label: string }[] = [
-        { key: "initial",  icon: "📋", label: "Initial Applications" },
-        { key: "payments", icon: "💳", label: "Payments"             },
-        { key: "full",     icon: "📝", label: "Full Applications"    },
+        { key: "initial", icon: "📋", label: "Initial Applications" },
+        { key: "payments", icon: "💳", label: "Payments" },
+        { key: "full", icon: "📝", label: "Full Applications" },
     ];
 
     const currentRows = tabData[activeTab];
@@ -263,7 +273,7 @@ const AdminPage: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-7">
-                        <StatCard icon="👥" value={String(stats.totalApplicants)}    label="Total Applicants" />
+                        <StatCard icon="👥" value={String(stats.totalApplicants)} label="Total Applicants" />
                         <StatCard icon="💰" value={formatNaira(stats.paymentsCollected)} label="Payments Collected" valueClass="text-emerald-600" />
                         <StatCard icon="📝" value={String(stats.fullFormsSubmitted)} label="Full Forms Submitted" valueClass="text-violet-700" />
                     </div>
@@ -281,9 +291,9 @@ const AdminPage: React.FC = () => {
                             <div className="py-10 text-center text-slate-400 text-[13px]">Loading...</div>
                         ) : currentRows.length === 0 ? (
                             <EmptyState message={
-                                activeTab === "initial"  ? "No initial applications yet" :
-                                activeTab === "payments" ? "No payments recorded yet" :
-                                "No full applications yet"
+                                activeTab === "initial" ? "No initial applications yet" :
+                                    activeTab === "payments" ? "No payments recorded yet" :
+                                        "No full applications yet"
                             } />
                         ) : (
                             <div className="overflow-x-auto">
