@@ -20,10 +20,10 @@ const formatDate = (iso: string): string =>
 
 const StatusBadge: React.FC<{ status: ApplicationRecord["status"] }> = ({ status }) => {
     const styles: Record<ApplicationRecord["status"], string> = {
-        "Pending": "bg-amber-100 text-amber-700",
+        "Pending":          "bg-amber-100 text-amber-700",
         "Payment Verified": "bg-blue-100 text-blue-700",
-        "Completed": "bg-emerald-100 text-emerald-700",
-        "Rejected": "bg-red-100 text-red-700",
+        "Completed":        "bg-emerald-100 text-emerald-700",
+        "Rejected":         "bg-red-100 text-red-700",
     };
     return (
         <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${styles[status]}`}>
@@ -115,6 +115,7 @@ const DetailModal: React.FC<{
                 </div>
 
                 <div className="p-5 sm:p-6 flex flex-col gap-5">
+                    {/* Status updater */}
                     <div className="flex items-center gap-3 flex-wrap">
                         <span className="text-[12px] font-bold text-slate-600">Update Status:</span>
                         {statuses.map((s) => (
@@ -128,21 +129,27 @@ const DetailModal: React.FC<{
                         ))}
                     </div>
 
+                    {/* Current status display */}
+                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                        <span className="text-[12px] text-slate-500 font-medium">Current status:</span>
+                        <StatusBadge status={app.status} />
+                    </div>
+
                     <Section title="👤 Student Information">
-                        <Row label="Full Name" value={`${app.student.firstName} ${app.student.lastName}`} />
-                        <Row label="Email" value={app.student.email} />
-                        <Row label="Phone" value={app.student.phone} />
-                        <Row label="DOB" value={app.student.dob} />
-                        <Row label="Gender" value={app.student.gender || "—"} />
+                        <Row label="Full Name"   value={`${app.student.firstName} ${app.student.lastName}`} />
+                        <Row label="Email"       value={app.student.email} />
+                        <Row label="Phone"       value={app.student.phone} />
+                        <Row label="DOB"         value={app.student.dob} />
+                        <Row label="Gender"      value={app.student.gender || "—"} />
                         <Row label="Nationality" value={app.student.nationality || "—"} />
-                        <Row label="Class" value={app.student.class} />
-                        <Row label="Applied On" value={formatDate(app.submittedAt)} />
+                        <Row label="Grade"       value={app.student.class} />
+                        <Row label="Applied On"  value={formatDate(app.submittedAt)} />
                     </Section>
 
                     {app.payment && (
                         <Section title="💳 Payment Confirmation">
-                            <Row label="Sender Name" value={app.payment.transferName} />
-                            <Row label="Sender Bank" value={app.payment.bankName} />
+                            <Row label="Sender Name"   value={app.payment.transferName} />
+                            <Row label="Sender Bank"   value={app.payment.bankName} />
                             <Row label="Transfer Date" value={app.payment.transferDate} />
                             {app.payment.receiptUrl && (
                                 <div className="flex gap-3 px-3.5 py-2.5">
@@ -161,26 +168,26 @@ const DetailModal: React.FC<{
                     {app.application && (
                         <>
                             <Section title="🏠 Address">
-                                <Row label="Street" value={app.application.streetAddress} />
-                                <Row label="City" value={app.application.city} />
-                                <Row label="State" value={app.application.state || "—"} />
+                                <Row label="Street"  value={app.application.streetAddress} />
+                                <Row label="City"    value={app.application.city} />
+                                <Row label="State"   value={app.application.state || "—"} />
                                 <Row label="Country" value={app.application.country} />
                             </Section>
                             <Section title="👨‍👩‍👦 Parent / Guardian">
-                                <Row label="Name" value={app.application.parentName} />
-                                <Row label="Phone" value={app.application.parentPhone} />
-                                <Row label="Email" value={app.application.parentEmail || "—"} />
+                                <Row label="Name"       value={app.application.parentName} />
+                                <Row label="Phone"      value={app.application.parentPhone} />
+                                <Row label="Email"      value={app.application.parentEmail || "—"} />
                                 <Row label="Occupation" value={app.application.parentOccupation || "—"} />
                             </Section>
                             <Section title="🚨 Emergency Contact">
-                                <Row label="Name" value={app.application.emergencyName} />
+                                <Row label="Name"         value={app.application.emergencyName} />
                                 <Row label="Relationship" value={app.application.emergencyRelationship} />
-                                <Row label="Phone" value={app.application.emergencyPhone} />
+                                <Row label="Phone"        value={app.application.emergencyPhone} />
                             </Section>
                             <Section title="🎓 Academic Background">
                                 <Row label="Previous School" value={app.application.previousSchool} />
-                                <Row label="Year Completed" value={app.application.yearCompleted} />
-                                <Row label="Grade" value={app.application.grade || "—"} />
+                                <Row label="Year Completed"  value={app.application.yearCompleted} />
+                                <Row label="Grade"           value={app.application.grade || "—"} />
                             </Section>
                             <Section title="✍️ Personal Statement">
                                 <p className="text-[13px] text-slate-700 leading-relaxed bg-slate-50 rounded-lg p-3">
@@ -208,12 +215,16 @@ const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     </div>
 );
 
+// ─── Admin Page ───────────────────────────────────────────────────────────────
+
 const AdminPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<TabKey>("initial");
+    const [activeTab, setActiveTab]     = useState<TabKey>("initial");
     const [applications, setApplications] = useState<ApplicationRecord[]>([]);
     const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading]         = useState(false);
 
+    // Load once on mount only — tab switching never re-fetches,
+    // so records are never lost when status changes
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -222,41 +233,49 @@ const AdminPage: React.FC = () => {
             setLoading(false);
         };
         load();
-    }, [activeTab]);
+    }, []); // ← empty deps: load once, never reload on tab switch
 
     const handleStatusChange = async (id: number, status: ApplicationRecord["status"]) => {
+        // Persist to storage
         await updateApplicationStatus(id, status);
-        const apps = await getApplications();
-        setApplications(apps);
-        setSelectedApp((prev) => prev && prev.id === id ? { ...prev, status } : prev);
+        // Update in-place in state — record stays in every tab, only badge changes
+        setApplications((prev) =>
+            prev.map((a) => a.id === id ? { ...a, status } : a)
+        );
+        // Keep modal open with updated status
+        setSelectedApp((prev) =>
+            prev && prev.id === id ? { ...prev, status } : prev
+        );
     };
 
-    const initialApps = applications;
-    const paymentApps = applications.filter((a) => a.payment);
-    const fullApps = applications.filter((a) => a.application);
+    // ── Tab filtering — based on data presence, NEVER on status ──────────────
+    // This means a Completed/Rejected record still shows in all tabs it qualifies for
+    const initialApps = applications;                              // everyone
+    const paymentApps = applications.filter((a) => a.payment);    // has payment
+    const fullApps    = applications.filter((a) => a.application); // has full form
 
     const tabData: Record<TabKey, ApplicationRecord[]> = {
-        initial: initialApps,
+        initial:  initialApps,
         payments: paymentApps,
-        full: fullApps,
+        full:     fullApps,
     };
 
     const counts = {
-        initial: initialApps.length,
+        initial:  initialApps.length,
         payments: paymentApps.length,
-        full: fullApps.length,
+        full:     fullApps.length,
     };
 
     const stats = {
-        totalApplicants: applications.length,
-        paymentsCollected: paymentApps.length * 30000,
+        totalApplicants:    applications.length,
+        paymentsCollected:  paymentApps.length * 15000,
         fullFormsSubmitted: fullApps.length,
     };
 
     const tabs: { key: TabKey; icon: string; label: string }[] = [
-        { key: "initial", icon: "📋", label: "Initial Applications" },
-        { key: "payments", icon: "💳", label: "Payments" },
-        { key: "full", icon: "📝", label: "Full Applications" },
+        { key: "initial",  icon: "📋", label: "Initial Applications" },
+        { key: "payments", icon: "💳", label: "Payments"             },
+        { key: "full",     icon: "📝", label: "Full Applications"    },
     ];
 
     const currentRows = tabData[activeTab];
@@ -267,13 +286,27 @@ const AdminPage: React.FC = () => {
             <div className="mx-auto py-6 sm:py-8 px-3 sm:px-4 pb-12 max-w-7xl">
                 <div className="bg-white rounded-2xl px-4 sm:px-8 md:px-10 py-6 sm:py-9 shadow-[0_2px_20px_rgba(11,53,123,0.08)] border border-slate-200">
 
-                    <div className="mb-5 sm:mb-6">
-                        <h1 className="text-[18px] sm:text-[22px] font-extrabold text-primary">Admin Dashboard</h1>
-                        <p className="text-[12px] sm:text-[13px] text-slate-500 mt-1">Live data — {today}</p>
+                    <div className="mb-5 sm:mb-6 flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                            <h1 className="text-[18px] sm:text-[22px] font-extrabold text-primary">Admin Dashboard</h1>
+                            <p className="text-[12px] sm:text-[13px] text-slate-500 mt-1">Live data — {today}</p>
+                        </div>
+                        {/* Manual refresh button */}
+                        <button
+                            onClick={async () => {
+                                setLoading(true);
+                                const apps = await getApplications();
+                                setApplications(apps);
+                                setLoading(false);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-bold cursor-pointer hover:bg-slate-50 transition-all bg-white"
+                        >
+                            🔄 Refresh
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-7">
-                        <StatCard icon="👥" value={String(stats.totalApplicants)} label="Total Applicants" />
+                        <StatCard icon="👥" value={String(stats.totalApplicants)}    label="Total Applicants" />
                         <StatCard icon="💰" value={formatNaira(stats.paymentsCollected)} label="Payments Collected" valueClass="text-emerald-600" />
                         <StatCard icon="📝" value={String(stats.fullFormsSubmitted)} label="Full Forms Submitted" valueClass="text-violet-700" />
                     </div>
@@ -288,12 +321,15 @@ const AdminPage: React.FC = () => {
 
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                         {loading ? (
-                            <div className="py-10 text-center text-slate-400 text-[13px]">Loading...</div>
+                            <div className="py-10 text-center text-slate-400 text-[13px]">
+                                <div className="text-[30px] mb-2">⏳</div>
+                                Loading applications...
+                            </div>
                         ) : currentRows.length === 0 ? (
                             <EmptyState message={
-                                activeTab === "initial" ? "No initial applications yet" :
-                                    activeTab === "payments" ? "No payments recorded yet" :
-                                        "No full applications yet"
+                                activeTab === "initial"  ? "No initial applications yet" :
+                                activeTab === "payments" ? "No payments recorded yet"    :
+                                                           "No full applications yet"
                             } />
                         ) : (
                             <div className="overflow-x-auto">
@@ -301,7 +337,7 @@ const AdminPage: React.FC = () => {
                                     <thead className="bg-slate-50 border-b border-slate-200">
                                         <tr>
                                             <Th>Name</Th>
-                                            <Th>Class</Th>
+                                            <Th>Grade</Th>
                                             <Th>Reference</Th>
                                             <Th>Date</Th>
                                             <Th>Status</Th>
