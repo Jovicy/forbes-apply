@@ -249,7 +249,7 @@ const AdminPage: React.FC = () => {
 
     const stats = {
         totalApplicants: applications.length,
-        paymentsCollected: paymentApps.length * 15000,
+        paymentsCollected: paymentApps.length * 30000,
         fullFormsSubmitted: fullApps.length,
     };
 

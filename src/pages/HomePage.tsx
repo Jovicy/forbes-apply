@@ -355,7 +355,7 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-3.5 mb-6 flex gap-2.5">
                 <span className="text-[16px] sm:text-[18px] shrink-0">⚠️</span>
                 <p className="text-[12px] sm:text-[13px] text-amber-800">
-                    This is a <strong>non-refundable application processing fee of ₦15,000.00</strong>.
+                    This is a <strong>non-refundable application processing fee of ₦30,000.00</strong>.
                     Please upload your payment receipt after transferring.
                 </p>
             </div>
@@ -371,7 +371,7 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                         </div>
                     </div>
                     <div className="text-right shrink-0">
-                        <div className="text-white font-black text-[17px] sm:text-[20px]">₦15,000</div>
+                        <div className="text-white font-black text-[17px] sm:text-[20px]">₦30,000</div>
                         <div className="text-white/60 text-[10px] sm:text-[11px]">Amount to transfer</div>
                     </div>
                 </div>
@@ -453,7 +453,7 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                                 onChange={(e) => { setConfirmed(e.target.checked); setErrors((p) => ({ ...p, confirmed: false })); }}
                                 className="mt-0.5 w-4 h-4 cursor-pointer accent-primary shrink-0" />
                             <label htmlFor="confirm-chk" className="text-[11.5px] sm:text-[12.5px] text-slate-700 cursor-pointer leading-relaxed">
-                                <strong>I confirm</strong> I have transferred <strong>₦15,000.00</strong> to Forbes International Academy
+                                <strong>I confirm</strong> I have transferred <strong>₦30,000.00</strong> to Forbes International Academy
                                 ({BANK.bankName} — Acc: {BANK.accountNumber}) and the receipt above is authentic.
                             </label>
                         </div>
