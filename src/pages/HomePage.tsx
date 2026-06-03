@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { saveApplication, getApplications } from "../utils/storage";
@@ -773,6 +773,9 @@ const HomePage: React.FC = () => {
     const [step2Data, setStep2Data] = useState<Step2Data>(EMPTY_STEP2);
     const [step3Data, setStep3Data] = useState<Step3Data>(EMPTY_STEP3);
 
+    // ── Store receiptUrl in a ref so it's always current when Step 3 submits ──
+    const receiptUrlRef = useRef<string | undefined>(undefined);
+
     const update1 = (field: keyof Step1Data, val: string) => setStep1Data((p) => ({ ...p, [field]: val }));
     const update2 = (field: keyof Step2Data, val: string) => setStep2Data((p) => ({ ...p, [field]: val }));
     const update3 = (field: keyof Step3Data, val: string) => setStep3Data((p) => ({ ...p, [field]: val }));
@@ -785,6 +788,7 @@ const HomePage: React.FC = () => {
         setStep2Data(EMPTY_STEP2);
         setStep3Data(EMPTY_STEP3);
         setReceiptFile(null);
+        receiptUrlRef.current = undefined;
         setStep(1);
         setScreen("form");
     };
@@ -793,13 +797,17 @@ const HomePage: React.FC = () => {
         setAppRef(app.appRef);
         setRecordId(app.id);
         setStep1Data(app.student as Step1Data);
-        if (app.payment) setStep2Data(app.payment as Step2Data);
+        if (app.payment) {
+            setStep2Data(app.payment as Step2Data);
+            // Restore receiptUrl into ref if resuming
+            receiptUrlRef.current = app.payment.receiptUrl;
+        }
         if (app.application) setStep3Data(app.application as Step3Data);
         setStep(app.payment ? 3 : 2);
         setScreen("form");
     };
 
-    // Step 1 → save initial record (no payment, no application yet)
+    // Step 1 → save initial record
     const handleStep1Complete = async () => {
         setSaving(true);
         const saved = await saveApplication({
@@ -814,11 +822,14 @@ const HomePage: React.FC = () => {
         setStep(2);
     };
 
-    // Step 2 → save with payment data (includes receipt as base64)
+    // Step 2 → convert receipt to base64, save to DB, store url in ref
     const handleStep2Complete = () => {
         setSaving(true);
 
         const doSave = async (receiptUrl?: string) => {
+            // ── Save receiptUrl into ref immediately (no React state timing issue) ──
+            if (receiptUrl) receiptUrlRef.current = receiptUrl;
+
             await saveApplication({
                 id: recordId,
                 appRef,
@@ -840,14 +851,14 @@ const HomePage: React.FC = () => {
         if (receiptFile) {
             const reader = new FileReader();
             reader.onload = (e) => doSave(e.target?.result as string);
-            reader.onerror = () => { setSaving(false); doSave(); }; // fallback without receipt
+            reader.onerror = () => { setSaving(false); doSave(); };
             reader.readAsDataURL(receiptFile);
         } else {
             doSave();
         }
     };
 
-    // Step 3 → final submit with full application
+    // Step 3 → final submit — reads receiptUrl from ref (always up-to-date)
     const handleFinalSubmit = async () => {
         setSaving(true);
         await saveApplication({
@@ -861,9 +872,7 @@ const HomePage: React.FC = () => {
                 bankName: step2Data.bankName,
                 transferDate: step2Data.transferDate,
                 receiptName: step2Data.receiptName,
-                // receiptUrl is preserved on the server via merge — we pass it along
-                // from step2Data if it was previously stored as a data URL
-                ...(step2Data.receiptUrl ? { receiptUrl: step2Data.receiptUrl } : {}),
+                receiptUrl: receiptUrlRef.current, // ✅ always correct, no stale state
             },
             application: step3Data,
         });
@@ -876,7 +885,6 @@ const HomePage: React.FC = () => {
             <div className="mx-auto py-6 sm:py-8 px-3 sm:px-4 pb-12 max-w-3xl">
                 <div className="bg-white rounded-2xl px-4 sm:px-8 md:px-10 py-6 sm:py-9 shadow-[0_2px_20px_rgba(11,53,123,0.08)] border border-slate-200">
 
-                    {/* Saving overlay indicator */}
                     {saving && (
                         <div className="fixed inset-0 bg-black/10 z-40 flex items-center justify-center pointer-events-none">
                             <div className="bg-white rounded-xl shadow-lg px-5 py-3 text-[13px] font-semibold text-slate-700 flex items-center gap-2">
