@@ -14,6 +14,7 @@ interface Step2Data {
     transferName: string; bankName: string; transferDate: string;
     receiptFile?: File | null;
     receiptName?: string;
+    receiptUrl?: string;
 }
 interface Step3Data {
     streetAddress: string; city: string; state: string; country: string;
@@ -39,7 +40,7 @@ const GRADES = ["Grade 7", "Grade 8", "Grade 9", "Grade 10"];
 
 const BANK = {
     accountName: "Forbes International Academy",
-    bankName:    "Polaris Bank",
+    bankName: "Polaris Bank",
     accountNumber: "4091257630",
 };
 
@@ -87,9 +88,18 @@ const Field: React.FC<FieldProps> = ({ label, required, children }) => (
 const CopyBtn: React.FC<{ value: string }> = ({ value }) => {
     const [copied, setCopied] = useState(false);
     return (
-        <button onClick={() => { navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }); }}
+        <button
+            onClick={() => {
+                navigator.clipboard.writeText(value).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1800);
+                });
+            }}
             className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-all cursor-pointer
-                ${copied ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>
+                ${copied
+                    ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+                    : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}
+        >
             {copied ? "✓" : "Copy"}
         </button>
     );
@@ -142,8 +152,8 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
 
     const stepLabel = (app: ApplicationRecord) => {
         if (app.application) return { label: "Full Application submitted", step: 3, done: true };
-        if (app.payment)     return { label: "Payment confirmed — continue to Full Application", step: 3, done: false };
-        return                      { label: "Initial Application done — continue to Payment", step: 2, done: false };
+        if (app.payment) return { label: "Payment confirmed — continue to Full Application", step: 3, done: false };
+        return { label: "Initial Application done — continue to Payment", step: 2, done: false };
     };
 
     return (
@@ -158,8 +168,10 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <button onClick={onNew}
-                    className="flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer text-left">
+                <button
+                    onClick={onNew}
+                    className="flex flex-col items-start gap-3 p-5 rounded-2xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer text-left"
+                >
                     <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center text-[22px]">📝</div>
                     <div>
                         <div className="font-extrabold text-primary text-[15px]">New Application</div>
@@ -175,14 +187,20 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
                         <div className="text-slate-500 text-[12px] mt-1">Already started? Enter your reference code or email to continue.</div>
                     </div>
                     <div className="w-full mt-1 flex gap-2">
-                        <input type="text" value={query}
+                        <input
+                            type="text"
+                            value={query}
                             onChange={(e) => { setQuery(e.target.value); setError(""); setFound(null); }}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                             placeholder="e.g. FRC-AB3X9Z or email"
                             className={`flex-1 min-w-0 px-3 py-2 rounded-lg border-[1.5px] text-sm outline-none transition-colors
-                                ${error ? "border-red-400 bg-red-50" : "border-slate-300 focus:border-primary bg-white"}`} />
-                        <button onClick={handleSearch} disabled={searching}
-                            className="px-3 py-2 bg-slate-700 text-white rounded-lg text-[12px] font-bold cursor-pointer hover:bg-slate-800 transition-all border-none shrink-0">
+                                ${error ? "border-red-400 bg-red-50" : "border-slate-300 focus:border-primary bg-white"}`}
+                        />
+                        <button
+                            onClick={handleSearch}
+                            disabled={searching}
+                            className="px-3 py-2 bg-slate-700 text-white rounded-lg text-[12px] font-bold cursor-pointer hover:bg-slate-800 transition-all border-none shrink-0"
+                        >
                             {searching ? "..." : "Find"}
                         </button>
                     </div>
@@ -202,8 +220,10 @@ const ResumeScreen: React.FC<ResumeScreenProps> = ({ onNew, onResume }) => {
                                         🎉 Your application is complete!
                                     </div>
                                 ) : (
-                                    <button onClick={() => onResume(found)}
-                                        className="w-full py-2 bg-primary text-white rounded-lg text-[13px] font-bold cursor-pointer hover:opacity-90 transition-all border-none">
+                                    <button
+                                        onClick={() => onResume(found)}
+                                        className="w-full py-2 bg-primary text-white rounded-lg text-[13px] font-bold cursor-pointer hover:opacity-90 transition-all border-none"
+                                    >
                                         Continue to Step {step} →
                                     </button>
                                 )}
@@ -228,16 +248,18 @@ const Step1: React.FC<Step1Props> = ({ data, onChange, onNext }) => {
     const [touched, setTouched] = useState(false);
 
     const required: (keyof Step1Data)[] = ["firstName", "lastName", "email", "phone", "dob", "class"];
-    const isFormValid = () => required.every((k) => k === "email" ? /\S+@\S+\.\S+/.test(data.email) : data[k].trim() !== "");
+    const isFormValid = () => required.every((k) =>
+        k === "email" ? /\S+@\S+\.\S+/.test(data.email) : data[k].trim() !== ""
+    );
 
     const validate = (): boolean => {
         const e: ErrorMap = {};
         if (!data.firstName.trim()) e.firstName = true;
-        if (!data.lastName.trim())  e.lastName  = true;
+        if (!data.lastName.trim()) e.lastName = true;
         if (!data.email.trim() || !/\S+@\S+\.\S+/.test(data.email)) e.email = true;
-        if (!data.phone.trim())     e.phone     = true;
-        if (!data.dob)              e.dob       = true;
-        if (!data.class)            e.class     = true;
+        if (!data.phone.trim()) e.phone = true;
+        if (!data.dob) e.dob = true;
+        if (!data.class) e.class = true;
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -259,10 +281,10 @@ const Step1: React.FC<Step1Props> = ({ data, onChange, onNext }) => {
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Field label="First Name" required><input type="text" placeholder="e.g. Amara" {...f("firstName")} /></Field>
-                    <Field label="Last Name" required><input type="text" placeholder="e.g. Osei" {...f("lastName")} /></Field>
+                    <Field label="Last Name" required><input type="text" placeholder="e.g. Osei"  {...f("lastName")} /></Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Email Address" required><input type="email" placeholder="you@example.com" {...f("email")} /></Field>
+                    <Field label="Email Address" required><input type="email" placeholder="you@example.com"   {...f("email")} /></Field>
                     <Field label="Phone Number" required><input type="tel" placeholder="+234 7700 000000" {...f("phone")} /></Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -279,7 +301,12 @@ const Step1: React.FC<Step1Props> = ({ data, onChange, onNext }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Field label="Nationality"><input type="text" placeholder="e.g. Nigerian" {...f("nationality")} /></Field>
                     <Field label="Grade Applying For" required>
-                        <select {...f("class")} className={`${inputBase} cursor-pointer ${errors.class && touched ? "border-red-400 bg-red-50" : ""} ${!data.class ? "text-slate-400" : "text-slate-800"}`}>
+                        <select
+                            {...f("class")}
+                            className={`${inputBase} cursor-pointer
+                                ${errors.class && touched ? "border-red-400 bg-red-50" : ""}
+                                ${!data.class ? "text-slate-400" : "text-slate-800"}`}
+                        >
                             <option value="" disabled>Select grade</option>
                             {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                         </select>
@@ -304,11 +331,11 @@ interface Step2Props {
     onNext: () => void; onBack: () => void;
 }
 const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChange, onNext, onBack }) => {
-    const [errors, setErrors]       = useState<ErrorMap>({});
+    const [errors, setErrors] = useState<ErrorMap>({});
     const [confirmed, setConfirmed] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [touched, setTouched]     = useState(false);
-    const [dragOver, setDragOver]   = useState(false);
+    const [touched, setTouched] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
 
     const isFormValid = () =>
         data.transferName.trim() !== "" &&
@@ -320,11 +347,12 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
     const validate = (): boolean => {
         const e: ErrorMap = {};
         if (!data.transferName?.trim()) e.transferName = true;
-        if (!data.bankName?.trim())     e.bankName     = true;
-        if (!data.transferDate)         e.transferDate = true;
-        if (!data.receiptFile)          e.receiptFile  = true;
-        if (!confirmed)                 e.confirmed    = true;
-        setErrors(e); return Object.keys(e).length === 0;
+        if (!data.bankName?.trim()) e.bankName = true;
+        if (!data.transferDate) e.transferDate = true;
+        if (!data.receiptFile) e.receiptFile = true;
+        if (!confirmed) e.confirmed = true;
+        setErrors(e);
+        return Object.keys(e).length === 0;
     };
 
     const handleSubmit = () => { setTouched(true); if (validate()) setSubmitted(true); };
@@ -332,8 +360,14 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
     const handleFile = (file: File | null) => {
         if (!file) return;
         const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-        if (!allowed.includes(file.type)) { setErrors((p) => ({ ...p, receiptFile: true })); return; }
-        if (file.size > 5 * 1024 * 1024) { setErrors((p) => ({ ...p, receiptFile: true })); return; }
+        if (!allowed.includes(file.type)) {
+            setErrors((p) => ({ ...p, receiptFile: true }));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors((p) => ({ ...p, receiptFile: true }));
+            return;
+        }
         onReceiptChange(file);
         onChange("receiptName", file.name);
         setErrors((p) => ({ ...p, receiptFile: false }));
@@ -341,7 +375,10 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
 
     const f = (field: keyof Step2Data) => ({
         value: (data[field] as string) || "",
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) => { onChange(field, e.target.value); setErrors((p) => ({ ...p, [field]: false })); },
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+            onChange(field, e.target.value);
+            setErrors((p) => ({ ...p, [field]: false }));
+        },
         className: `${inputBase} ${errors[field] && touched ? "border-red-400 bg-red-50" : ""}`,
     });
 
@@ -376,8 +413,8 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                     </div>
                 </div>
                 <div className="px-4 sm:px-5 py-1">
-                    <BankRow label="Account Name"   value={BANK.accountName} />
-                    <BankRow label="Bank Name"      value={BANK.bankName} />
+                    <BankRow label="Account Name" value={BANK.accountName} />
+                    <BankRow label="Bank Name" value={BANK.bankName} />
                     <BankRow label="Account Number" value={BANK.accountNumber} />
                 </div>
             </div>
@@ -394,7 +431,10 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                         Thank you, <strong>{firstName}</strong>. We've recorded your payment confirmation and receipt.
                         You may now proceed to the full application.
                     </p>
-                    <button onClick={onNext} className="font-bold rounded-lg py-2.5 px-6 sm:px-7 text-sm bg-primary text-white border-none cursor-pointer hover:opacity-90 transition-all">
+                    <button
+                        onClick={onNext}
+                        className="font-bold rounded-lg py-2.5 px-6 sm:px-7 text-sm bg-primary text-white border-none cursor-pointer hover:opacity-90 transition-all"
+                    >
                         Proceed to Full Application Form →
                     </button>
                 </div>
@@ -414,20 +454,34 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                             <input type="date" {...f("transferDate")} />
                         </Field>
 
+                        {/* Receipt upload */}
                         <Field label="Upload Payment Receipt" required>
                             <div
                                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                                 onDragLeave={() => setDragOver(false)}
-                                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0] ?? null); }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    setDragOver(false);
+                                    handleFile(e.dataTransfer.files[0] ?? null);
+                                }}
                                 className={`relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed transition-colors cursor-pointer
-                                    ${dragOver ? "border-primary bg-primary/5" :
-                                      errors.receiptFile && touched ? "border-red-400 bg-red-50" :
-                                      data.receiptFile ? "border-emerald-400 bg-emerald-50" :
-                                      "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"}`}
+                                    ${dragOver
+                                        ? "border-primary bg-primary/5"
+                                        : errors.receiptFile && touched
+                                            ? "border-red-400 bg-red-50"
+                                            : data.receiptFile
+                                                ? "border-emerald-400 bg-emerald-50"
+                                                : "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"
+                                    }`}
                                 onClick={() => document.getElementById("receipt-input")?.click()}
                             >
-                                <input id="receipt-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
-                                    className="hidden" onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
+                                <input
+                                    id="receipt-input"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                                    className="hidden"
+                                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                                />
                                 {data.receiptFile ? (
                                     <>
                                         <div className="text-[28px]">✅</div>
@@ -437,21 +491,31 @@ const Step2: React.FC<Step2Props> = ({ data, firstName, onChange, onReceiptChang
                                 ) : (
                                     <>
                                         <div className="text-[30px]">📎</div>
-                                        <div className="text-[13px] font-semibold text-slate-700 text-center">Click to upload or drag & drop</div>
+                                        <div className="text-[13px] font-semibold text-slate-700 text-center">Click to upload or drag &amp; drop</div>
                                         <div className="text-[11px] text-slate-400">JPG, PNG, WebP or PDF · Max 5 MB</div>
                                     </>
                                 )}
                             </div>
                             {errors.receiptFile && touched && (
-                                <p className="text-red-500 text-[11px] mt-1">Please upload your payment receipt (JPG, PNG, or PDF, max 5 MB).</p>
+                                <p className="text-red-500 text-[11px] mt-1">
+                                    Please upload your payment receipt (JPG, PNG, WebP, or PDF, max 5 MB).
+                                </p>
                             )}
                         </Field>
 
+                        {/* Confirmation checkbox */}
                         <div className={`flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border transition-colors
                             ${errors.confirmed && touched ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}>
-                            <input type="checkbox" id="confirm-chk" checked={confirmed}
-                                onChange={(e) => { setConfirmed(e.target.checked); setErrors((p) => ({ ...p, confirmed: false })); }}
-                                className="mt-0.5 w-4 h-4 cursor-pointer accent-primary shrink-0" />
+                            <input
+                                type="checkbox"
+                                id="confirm-chk"
+                                checked={confirmed}
+                                onChange={(e) => {
+                                    setConfirmed(e.target.checked);
+                                    setErrors((p) => ({ ...p, confirmed: false }));
+                                }}
+                                className="mt-0.5 w-4 h-4 cursor-pointer accent-primary shrink-0"
+                            />
                             <label htmlFor="confirm-chk" className="text-[11.5px] sm:text-[12.5px] text-slate-700 cursor-pointer leading-relaxed">
                                 <strong>I confirm</strong> I have transferred <strong>₦30,000.00</strong> to Forbes International Academy
                                 ({BANK.bankName} — Acc: {BANK.accountNumber}) and the receipt above is authentic.
@@ -479,9 +543,9 @@ interface Step3Props {
     onBack: () => void; onSubmit: () => void;
 }
 const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack, onSubmit }) => {
-    const [errors, setErrors]       = useState<ErrorMap>({});
+    const [errors, setErrors] = useState<ErrorMap>({});
     const [submitted, setSubmitted] = useState(false);
-    const [touched, setTouched]     = useState(false);
+    const [touched, setTouched] = useState(false);
 
     const requiredFields: (keyof Step3Data)[] = [
         "streetAddress", "city", "country",
@@ -494,18 +558,21 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
 
     const validate = (): boolean => {
         const e: ErrorMap = {};
-        requiredFields.forEach((k) => {
-            if (!(data[k] || "").trim()) e[k] = true;
-        });
-        setErrors(e); return Object.keys(e).length === 0;
+        requiredFields.forEach((k) => { if (!(data[k] || "").trim()) e[k] = true; });
+        setErrors(e);
+        return Object.keys(e).length === 0;
     };
 
-    const handleSubmit = () => { setTouched(true); if (validate()) { setSubmitted(true); onSubmit(); } };
+    const handleSubmit = () => {
+        setTouched(true);
+        if (validate()) { setSubmitted(true); onSubmit(); }
+    };
 
     const f = (field: keyof Step3Data) => ({
         value: data[field] || "",
         onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-            onChange(field, e.target.value); setErrors((p) => ({ ...p, [field]: false }));
+            onChange(field, e.target.value);
+            setErrors((p) => ({ ...p, [field]: false }));
         },
         className: `${inputBase} ${errors[field] && touched ? "border-red-400 bg-red-50" : ""}`,
     });
@@ -515,8 +582,12 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
             <div className="py-10 sm:py-12 text-center px-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white text-[26px] sm:text-[30px] mx-auto mb-5">🎉</div>
                 <h2 className="text-[20px] sm:text-[22px] font-extrabold text-primary mb-2">Application Submitted!</h2>
-                <p className="text-slate-600 text-[13px] sm:text-[14px] mb-1">Thank you, <strong>{firstName}</strong>. Your full application has been received.</p>
-                <p className="text-slate-500 text-[12px] sm:text-[13px] mb-5">Reference: <strong className="font-mono text-primary">{appRef}</strong></p>
+                <p className="text-slate-600 text-[13px] sm:text-[14px] mb-1">
+                    Thank you, <strong>{firstName}</strong>. Your full application has been received.
+                </p>
+                <p className="text-slate-500 text-[12px] sm:text-[13px] mb-5">
+                    Reference: <strong className="font-mono text-primary">{appRef}</strong>
+                </p>
                 <div className="bg-accent rounded-xl p-4 max-w-sm mx-auto text-[12px] sm:text-[13px] text-slate-600">
                     📧 A confirmation will be sent to your registered email. Please check your inbox and spam folder.
                 </div>
@@ -535,32 +606,51 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
 
             <SectionHeader icon="🏠" label="Contact & Address" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
-                <Field label="Street Address" required><input type="text" placeholder="House number and street name" {...f("streetAddress")} /></Field>
+                <Field label="Street Address" required>
+                    <input type="text" placeholder="House number and street name" {...f("streetAddress")} />
+                </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <Field label="City / Town" required><input type="text" placeholder="e.g. Kano" {...f("city")} /></Field>
                     <Field label="State"><input type="text" placeholder="e.g. Kano State" {...f("state")} /></Field>
                 </div>
-                <Field label="Country of Residence" required><input type="text" placeholder="e.g. Nigeria" {...f("country")} /></Field>
+                <Field label="Country of Residence" required>
+                    <input type="text" placeholder="e.g. Nigeria" {...f("country")} />
+                </Field>
             </div>
 
             <SectionHeader icon="👨‍👩‍👦" label="Parent / Guardian Information" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Parent / Guardian Full Name" required><input type="text" placeholder="e.g. Mr. Emeka Osei" {...f("parentName")} /></Field>
-                    <Field label="Occupation"><input type="text" placeholder="e.g. Civil Servant" {...f("parentOccupation")} /></Field>
+                    <Field label="Parent / Guardian Full Name" required>
+                        <input type="text" placeholder="e.g. Mr. Emeka Osei" {...f("parentName")} />
+                    </Field>
+                    <Field label="Occupation">
+                        <input type="text" placeholder="e.g. Civil Servant" {...f("parentOccupation")} />
+                    </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Parent Phone Number" required><input type="tel" placeholder="+234 8100 000000" {...f("parentPhone")} /></Field>
-                    <Field label="Parent Email Address"><input type="email" placeholder="parent@example.com" {...f("parentEmail")} /></Field>
+                    <Field label="Parent Phone Number" required>
+                        <input type="tel" placeholder="+234 8100 000000" {...f("parentPhone")} />
+                    </Field>
+                    <Field label="Parent Email Address">
+                        <input type="email" placeholder="parent@example.com" {...f("parentEmail")} />
+                    </Field>
                 </div>
             </div>
 
             <SectionHeader icon="🚨" label="Emergency Contact" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Full Name" required><input type="text" placeholder="Contact's full name" {...f("emergencyName")} /></Field>
+                    <Field label="Full Name" required>
+                        <input type="text" placeholder="Contact's full name" {...f("emergencyName")} />
+                    </Field>
                     <Field label="Relationship" required>
-                        <select {...f("emergencyRelationship")} className={`${inputBase} cursor-pointer ${errors.emergencyRelationship && touched ? "border-red-400 bg-red-50" : ""} ${!data.emergencyRelationship ? "text-slate-400" : "text-slate-800"}`}>
+                        <select
+                            {...f("emergencyRelationship")}
+                            className={`${inputBase} cursor-pointer
+                                ${errors.emergencyRelationship && touched ? "border-red-400 bg-red-50" : ""}
+                                ${!data.emergencyRelationship ? "text-slate-400" : "text-slate-800"}`}
+                        >
                             <option value="" disabled>Select relationship</option>
                             <option value="father">Father</option>
                             <option value="mother">Mother</option>
@@ -572,14 +662,20 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                         </select>
                     </Field>
                 </div>
-                <Field label="Phone Number" required><input type="tel" placeholder="+234 8100 000000" {...f("emergencyPhone")} /></Field>
+                <Field label="Phone Number" required>
+                    <input type="tel" placeholder="+234 8100 000000" {...f("emergencyPhone")} />
+                </Field>
             </div>
 
             <SectionHeader icon="🎓" label="Previous Academic Background" />
             <div className="flex flex-col gap-3 sm:gap-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Field label="Most Recent School Attended" required><input type="text" placeholder="School name" {...f("previousSchool")} /></Field>
-                    <Field label="Year Completed / Left" required><input type="text" placeholder="e.g. 2025" {...f("yearCompleted")} /></Field>
+                    <Field label="Most Recent School Attended" required>
+                        <input type="text" placeholder="School name" {...f("previousSchool")} />
+                    </Field>
+                    <Field label="Year Completed / Left" required>
+                        <input type="text" placeholder="e.g. 2025" {...f("yearCompleted")} />
+                    </Field>
                 </div>
                 <Field label="Last Class / Grade Completed">
                     <input type="text" placeholder="e.g. Grade 6, Primary 6" {...f("grade")} />
@@ -588,16 +684,25 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
 
             <SectionHeader icon="✍️" label="Personal Statement" />
             <Field label="Why do you want to attend Forbes International Academy?" required>
-                <textarea rows={6} placeholder="Describe your goals, interests, and why you chose Forbes International Academy."
+                <textarea
+                    rows={6}
+                    placeholder="Describe your goals, interests, and why you chose Forbes International Academy."
                     value={data.personalStatement || ""}
-                    onChange={(e) => { onChange("personalStatement", e.target.value); setErrors((p) => ({ ...p, personalStatement: false })); }}
-                    className={`${inputBase} resize-y ${errors.personalStatement && touched ? "border-red-400 bg-red-50" : ""}`} />
+                    onChange={(e) => {
+                        onChange("personalStatement", e.target.value);
+                        setErrors((p) => ({ ...p, personalStatement: false }));
+                    }}
+                    className={`${inputBase} resize-y ${errors.personalStatement && touched ? "border-red-400 bg-red-50" : ""}`}
+                />
             </Field>
 
             <SectionHeader icon="ℹ️" label="Additional Information" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
                 <Field label="Disability / Accessibility Needs">
-                    <select {...f("disability")} className={`${inputBase} cursor-pointer ${!data.disability ? "text-slate-400" : "text-slate-800"}`}>
+                    <select
+                        {...f("disability")}
+                        className={`${inputBase} cursor-pointer ${!data.disability ? "text-slate-400" : "text-slate-800"}`}
+                    >
                         <option value="" disabled>Select an option</option>
                         <option value="none">None</option>
                         <option value="mobility">Mobility impairment</option>
@@ -608,7 +713,10 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
                     </select>
                 </Field>
                 <Field label="How did you hear about us?">
-                    <select {...f("hearAbout")} className={`${inputBase} cursor-pointer ${!data.hearAbout ? "text-slate-400" : "text-slate-800"}`}>
+                    <select
+                        {...f("hearAbout")}
+                        className={`${inputBase} cursor-pointer ${!data.hearAbout ? "text-slate-400" : "text-slate-800"}`}
+                    >
                         <option value="" disabled>Select an option</option>
                         <option value="search">Search engine</option>
                         <option value="social">Social media</option>
@@ -621,7 +729,8 @@ const Step3: React.FC<Step3Props> = ({ data, firstName, appRef, onChange, onBack
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 mb-6 text-[11.5px] sm:text-[12.5px] text-slate-600 leading-relaxed">
-                <strong>Declaration:</strong> By submitting this form, I confirm all information provided is accurate and complete. Any false information may result in rejection of my application.
+                <strong>Declaration:</strong> By submitting this form, I confirm all information provided is accurate and complete.
+                Any false information may result in rejection of my application.
             </div>
 
             <div className="flex items-center justify-between gap-3">
@@ -653,11 +762,12 @@ const RefBanner: React.FC<{ appRef: string }> = ({ appRef }) => (
 type AppScreen = "landing" | "form";
 
 const HomePage: React.FC = () => {
-    const [screen, setScreen]     = useState<AppScreen>("landing");
-    const [step, setStep]         = useState<number>(1);
-    const [appRef, setAppRef]     = useState<string>("");
+    const [screen, setScreen] = useState<AppScreen>("landing");
+    const [step, setStep] = useState<number>(1);
+    const [appRef, setAppRef] = useState<string>("");
     const [recordId, setRecordId] = useState<number>(0);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [saving, setSaving] = useState(false);
 
     const [step1Data, setStep1Data] = useState<Step1Data>(EMPTY_STEP1);
     const [step2Data, setStep2Data] = useState<Step2Data>(EMPTY_STEP2);
@@ -671,12 +781,17 @@ const HomePage: React.FC = () => {
         const ref = generateRef();
         setAppRef(ref);
         setRecordId(0);
-        setStep1Data(EMPTY_STEP1); setStep2Data(EMPTY_STEP2); setStep3Data(EMPTY_STEP3);
-        setReceiptFile(null); setStep(1); setScreen("form");
+        setStep1Data(EMPTY_STEP1);
+        setStep2Data(EMPTY_STEP2);
+        setStep3Data(EMPTY_STEP3);
+        setReceiptFile(null);
+        setStep(1);
+        setScreen("form");
     };
 
     const handleResume = (app: ApplicationRecord) => {
-        setAppRef(app.appRef); setRecordId(app.id);
+        setAppRef(app.appRef);
+        setRecordId(app.id);
         setStep1Data(app.student as Step1Data);
         if (app.payment) setStep2Data(app.payment as Step2Data);
         if (app.application) setStep3Data(app.application as Step3Data);
@@ -684,44 +799,75 @@ const HomePage: React.FC = () => {
         setScreen("form");
     };
 
+    // Step 1 → save initial record (no payment, no application yet)
     const handleStep1Complete = async () => {
+        setSaving(true);
         const saved = await saveApplication({
-            id: 0, appRef, status: "Pending",
+            id: 0,
+            appRef,
+            status: "Pending",
             submittedAt: new Date().toISOString(),
             student: step1Data,
         });
+        setSaving(false);
         if (saved) setRecordId(saved.id);
         setStep(2);
     };
 
+    // Step 2 → save with payment data (includes receipt as base64)
     const handleStep2Complete = () => {
-        const save = async (receiptUrl?: string) => {
+        setSaving(true);
+
+        const doSave = async (receiptUrl?: string) => {
             await saveApplication({
-                id: recordId, appRef, status: "Payment Verified",
+                id: recordId,
+                appRef,
+                status: "Payment Verified",
                 submittedAt: new Date().toISOString(),
                 student: step1Data,
-                payment: { ...step2Data, receiptUrl, receiptName: step2Data.receiptName },
+                payment: {
+                    transferName: step2Data.transferName,
+                    bankName: step2Data.bankName,
+                    transferDate: step2Data.transferDate,
+                    receiptUrl,
+                    receiptName: step2Data.receiptName,
+                },
             });
+            setSaving(false);
             setStep(3);
         };
 
         if (receiptFile) {
             const reader = new FileReader();
-            reader.onload = (e) => save(e.target?.result as string);
+            reader.onload = (e) => doSave(e.target?.result as string);
+            reader.onerror = () => { setSaving(false); doSave(); }; // fallback without receipt
             reader.readAsDataURL(receiptFile);
         } else {
-            save();
+            doSave();
         }
     };
 
+    // Step 3 → final submit with full application
     const handleFinalSubmit = async () => {
+        setSaving(true);
         await saveApplication({
-            id: recordId, appRef, status: "Completed",
+            id: recordId,
+            appRef,
+            status: "Completed",
             submittedAt: new Date().toISOString(),
             student: step1Data,
-            payment: step2Data,
+            payment: {
+                transferName: step2Data.transferName,
+                bankName: step2Data.bankName,
+                transferDate: step2Data.transferDate,
+                receiptName: step2Data.receiptName,
+                // receiptUrl is preserved on the server via merge — we pass it along
+                // from step2Data if it was previously stored as a data URL
+                ...(step2Data.receiptUrl ? { receiptUrl: step2Data.receiptUrl } : {}),
+            },
             application: step3Data,
         });
+        setSaving(false);
     };
 
     return (
@@ -729,25 +875,52 @@ const HomePage: React.FC = () => {
             <Navbar variant="application" currentStep={screen === "form" ? step : 1} />
             <div className="mx-auto py-6 sm:py-8 px-3 sm:px-4 pb-12 max-w-3xl">
                 <div className="bg-white rounded-2xl px-4 sm:px-8 md:px-10 py-6 sm:py-9 shadow-[0_2px_20px_rgba(11,53,123,0.08)] border border-slate-200">
-                    {screen === "landing" && <ResumeScreen onNew={handleNew} onResume={handleResume} />}
+
+                    {/* Saving overlay indicator */}
+                    {saving && (
+                        <div className="fixed inset-0 bg-black/10 z-40 flex items-center justify-center pointer-events-none">
+                            <div className="bg-white rounded-xl shadow-lg px-5 py-3 text-[13px] font-semibold text-slate-700 flex items-center gap-2">
+                                <span className="animate-spin text-[16px]">⏳</span> Saving…
+                            </div>
+                        </div>
+                    )}
+
+                    {screen === "landing" && (
+                        <ResumeScreen onNew={handleNew} onResume={handleResume} />
+                    )}
                     {screen === "form" && (
                         <>
                             {step > 1 && <RefBanner appRef={appRef} />}
-                            {step === 1 && <Step1 data={step1Data} onChange={update1} onNext={handleStep1Complete} />}
+                            {step === 1 && (
+                                <Step1 data={step1Data} onChange={update1} onNext={handleStep1Complete} />
+                            )}
                             {step === 2 && (
                                 <Step2
-                                    data={step2Data} appRef={appRef} firstName={step1Data.firstName}
+                                    data={step2Data}
+                                    appRef={appRef}
+                                    firstName={step1Data.firstName}
                                     onChange={update2}
                                     onReceiptChange={(file) => {
                                         setReceiptFile(file);
-                                        setStep2Data((p) => ({ ...p, receiptFile: file, receiptName: file?.name ?? "" }));
+                                        setStep2Data((p) => ({
+                                            ...p,
+                                            receiptFile: file,
+                                            receiptName: file?.name ?? "",
+                                        }));
                                     }}
-                                    onNext={handleStep2Complete} onBack={() => setStep(1)}
+                                    onNext={handleStep2Complete}
+                                    onBack={() => setStep(1)}
                                 />
                             )}
                             {step === 3 && (
-                                <Step3 data={step3Data} firstName={step1Data.firstName} appRef={appRef}
-                                    onChange={update3} onBack={() => setStep(2)} onSubmit={handleFinalSubmit} />
+                                <Step3
+                                    data={step3Data}
+                                    firstName={step1Data.firstName}
+                                    appRef={appRef}
+                                    onChange={update3}
+                                    onBack={() => setStep(2)}
+                                    onSubmit={handleFinalSubmit}
+                                />
                             )}
                         </>
                     )}

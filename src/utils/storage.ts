@@ -62,24 +62,36 @@ export const getApplications = async (): Promise<ApplicationRecord[]> => {
     }
 };
 
-// ─── Write ────────────────────────────────────────────────────────────────────
+// ─── Create or full-update (applicant form only) ──────────────────────────────
+// This sends payment + application data. Uses PUT which does a safe merge on
+// the server — existing fields are never wiped if you omit them.
 
 export const saveApplication = async (app: ApplicationRecord): Promise<ApplicationRecord | null> => {
     try {
         if (app.id && app.id > 0) {
+            // Full update — server merges, never overwrites with null
             const res = await fetch(`${API_BASE}/applications/${app.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(mapToDb(app)),
             });
+            if (!res.ok) {
+                console.error("PUT failed:", await res.text());
+                return null;
+            }
             const data = await res.json();
             return mapFromDb(data);
         } else {
+            // New record
             const res = await fetch(`${API_BASE}/applications`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(mapToDb(app)),
             });
+            if (!res.ok) {
+                console.error("POST failed:", await res.text());
+                return null;
+            }
             const data = await res.json();
             return mapFromDb(data);
         }
@@ -89,18 +101,22 @@ export const saveApplication = async (app: ApplicationRecord): Promise<Applicati
     }
 };
 
-// ─── Update status ────────────────────────────────────────────────────────────
+// ─── Update status only (admin dashboard) ────────────────────────────────────
+// Uses PATCH /applications/:id/status — NEVER touches payment or application data
 
 export const updateApplicationStatus = async (
     id: number,
     status: ApplicationRecord["status"]
 ): Promise<void> => {
     try {
-        await fetch(`${API_BASE}/applications/${id}`, {
-            method: "PUT",
+        const res = await fetch(`${API_BASE}/applications/${id}/status`, {
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status }),
         });
+        if (!res.ok) {
+            console.error("PATCH status failed:", await res.text());
+        }
     } catch (e) {
         console.error("Failed to update status:", e);
     }
@@ -136,20 +152,24 @@ export const clearApplications = (): void => {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const mapToDb = (app: ApplicationRecord) => ({
-    appRef: app.appRef,
-    status: app.status,
+    appRef:      app.appRef,
+    status:      app.status,
     submittedAt: app.submittedAt,
-    student: app.student,
-    payment: app.payment || null,
+    student:     app.student,
+    payment:     app.payment     || null,
     application: app.application || null,
 });
 
 const mapFromDb = (row: any): ApplicationRecord => ({
-    id: row.id,
-    appRef: row.app_ref,
-    status: row.status,
+    id:          row.id,
+    appRef:      row.app_ref,
+    status:      row.status,
     submittedAt: row.submitted_at,
-    student: row.student,
-    payment: row.payment,
-    application: row.application,
+    student:     typeof row.student     === "string" ? JSON.parse(row.student)     : row.student,
+    payment:     row.payment
+                   ? (typeof row.payment     === "string" ? JSON.parse(row.payment)     : row.payment)
+                   : undefined,
+    application: row.application
+                   ? (typeof row.application === "string" ? JSON.parse(row.application) : row.application)
+                   : undefined,
 });
