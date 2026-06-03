@@ -127,26 +127,26 @@ const ReceiptViewer: React.FC<{ receiptUrl: string; receiptName?: string }> = ({
                     </button>
                     {/* File name */}
                     {receiptName && (
-                        <span className="text-[11px] text-slate-400 italic truncate max-w-[160px]">{receiptName}</span>
+                        <span className="text-[11px] text-slate-400 italic truncate max-w-40">{receiptName}</span>
                     )}
                 </div>
             </div>
 
             {/* Inline preview */}
             {expanded && (
-                <div className="mt-1 ml-0 sm:ml-[8.5rem] rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                <div className="mt-1 ml-0 sm:ml-34 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                     {isImage && (
                         <img
                             src={receiptUrl}
                             alt="Payment receipt"
-                            className="w-full max-h-[420px] object-contain"
+                            className="w-full max-h-105 object-contain"
                         />
                     )}
                     {isPdf && (
                         <iframe
                             src={receiptUrl}
                             title="Payment receipt"
-                            className="w-full h-[480px] border-none"
+                            className="w-full h-120 border-none"
                         />
                     )}
                 </div>
@@ -299,7 +299,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     <div className="flex gap-3 px-3.5 py-2.5 border-b border-slate-100 last:border-0">
         <span className="text-[12px] text-slate-400 w-32 shrink-0">{label}</span>
-        <span className="text-[12px] text-slate-700 font-medium break-words min-w-0">{value}</span>
+        <span className="text-[12px] text-slate-700 font-medium wrap-break-word min-w-0">{value}</span>
     </div>
 );
 
@@ -428,7 +428,7 @@ const AdminPage: React.FC = () => {
                             />
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[640px]">
+                                <table className="w-full min-w-160">
                                     <thead className="bg-slate-50 border-b border-slate-200">
                                         <tr>
                                             <Th>Name</Th>
